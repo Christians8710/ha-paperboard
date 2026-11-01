@@ -94,3 +94,41 @@ async def test_read_only_user_cannot_read_display_keys(hass, display, hass_ws_cl
     response=await client.receive_json()
     assert not response["success"]
     assert response["error"]["code"]=="unauthorized"
+
+
+async def test_installer_credentials_persist_and_stay_admin_only(hass, display, hass_ws_client):
+    hass.data['paperboard']['firmware']={'available':True,'version':'0.2.0','files':{}}
+    client=await hass_ws_client(hass)
+    for msgid in (1,2):
+        await client.send_json({'id':msgid,'type':'paperboard/command','action':'installer_prepare','entry_id':display.entry_id})
+        response=await client.receive_json();assert response['success']
+        if msgid==1:credentials=response['result']['credentials']
+        else:assert response['result']['credentials']==credentials
+    await hass.config_entries.async_reload(display.entry_id)
+    d=hass.data['paperboard']['displays'][display.entry_id]
+    assert d.installation==credentials
+    assert 'api_key' not in str(d.public()) and 'ota_password' not in str(d.public())
+
+
+async def test_device_sync_auth_fragmented_payload_and_status_rendering(hass, display, hass_client):
+    import json
+    from custom_components.paperboard.installer import installation_credentials
+    d=hass.data['paperboard']['displays'][display.entry_id];d.installation=installation_credentials()
+    client=await hass_client(hass)
+    url=f'/api/paperboard/device/{display.entry_id}/sync'
+    body={'model':'e1002','version':'0.2.0','install_id':d.installation['install_id'],'boot_id':'123','downloaded':True,'battery':82,'temperature':21.5,'humidity':48}
+    assert (await client.post(url,json=body)).status==401
+    headers={'X-PaperBoard-Token':display.data['token'],'Content-Type':'application/json'}
+    async def chunks():
+        raw=json.dumps(body).encode();yield raw[:15];yield raw[15:]
+    response=await client.post(url,data=chunks(),headers=headers)
+    assert response.status==200
+    assert (await response.json())['pages']==3
+    assert d.device_status['downloaded'] is True
+    from datetime import datetime,timezone
+    payload=await d.data(d.layout,datetime.now(timezone.utc))
+    entity=payload['bindings']['battery_entity']
+    assert payload['states'][entity]['state']=='82'
+    body['battery']=-10
+    assert (await client.post(url,json=body,headers=headers)).status==400
+    assert (await client.post(url,data=b'x'*5000,headers=headers)).status==413

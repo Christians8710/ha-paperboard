@@ -21,9 +21,13 @@ jobs:
       - name: Python- und Home-Assistant-Tests
         run: python -m pytest -q
       - name: Editor prüfen
-        run: node --test tests/editor.test.js
+        run: node --test tests/*.test.js
       - name: JavaScript-Syntax prüfen
-        run: node --check custom_components/paperboard/frontend/panel.js
+        run: |
+          node --check custom_components/paperboard/frontend/panel.js
+          node --check custom_components/paperboard/frontend/installer-ui.js
+          node --check custom_components/paperboard/frontend/flash.bundle.js
+          node --check custom_components/paperboard/frontend/offline.bundle.js
       - name: Vorschauen und Installationspakete prüfen
         run: python tools/build.py
       - uses: actions/upload-artifact@v4

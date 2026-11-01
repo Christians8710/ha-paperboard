@@ -1,7 +1,9 @@
 # Geräteanbindung
 
 Die Home-Assistant-Integration erzeugt PNG-Bilder. Das Display lädt diese mit
-einem eigenen Schlüssel ab. Die Einrichtung in Home Assistant flasht kein Gerät.
+einem eigenen Schlüssel ab. Die Einrichtung in Home Assistant allein flasht kein
+Gerät. Für eine ausdrücklich gewählte E1002-Neuinstallation gibt es ab 0.2.0
+den geführten USB-Installer unter **PaperBoard → Gerät & Verbindung**.
 
 ## Vorhandenes E1002 weiterverwenden
 
@@ -14,7 +16,27 @@ den Header und den zugehörigen geheimen Schlüssel anpassen. Die bisherige
 Integration `eink_calendar` kann bis zur erfolgreichen Umstellung parallel
 installiert bleiben. PaperBoard übernimmt keine persönlichen Daten automatisch.
 
-## Neues E1002
+## Neues E1002 mit USB-Installer (empfohlen)
+
+Der Installer bringt vollständig kompilierte Firmware mit. Es sind keine
+persönliche YAML-Datei und kein ESPHome-Build erforderlich. Chrome oder Edge,
+ein USB-Datenkabel, ein 2,4-GHz-WLAN und eine vom Display erreichbare
+Home-Assistant-Adresse werden benötigt. Bei einer normalen HTTP-Adresse
+den eigenständigen Installer herunterladen und lokal in Chrome/Edge öffnen.
+
+Die bestätigte Neuinstallation löscht alle bisherigen Einstellungen, schreibt
+die Firmware sowie persönliche Zugangsdaten, prüft beide und startet das Gerät.
+Die neue Installation verwendet DHCP, eigene API-/OTA-Zugänge und den
+Bildschlüssel des ausgewählten PaperBoard-Displays. Seitenzahl, Ausrichtung und
+Abrufabstand kommen anschließend automatisch von Home Assistant. Die drei
+Hardwaretasten wechseln zurück/vor und fordern eine Aktualisierung an.
+
+Die Gerätezugänge und die private Installerdatei sicher aufbewahren. Es wird
+kein echtes Gerät automatisch ohne USB-Auswahl und Löschbestätigung beschrieben.
+Für die Browser- und WLAN-Anmeldung sowie die echte Anzeige steht ein
+physischer E1002-Test noch aus. Details im Haupt-README.
+
+## Neues E1002 mit eigener ESPHome-Konfiguration (Alternative)
 
 `paperboard-e1002.yaml` ist eine vollständige ESPHome-Vorlage für ein neues Gerät.
 Sie enthält keine echten Zugangsdaten und keine feste IP. ESPHome ab 2026.10.1
@@ -37,7 +59,8 @@ Die Vorlage deaktiviert keine HTTPS-Zertifikatsprüfung.
 
 Die erste Installation erfolgt im ESPHome Device Builder über USB. Anschließend
 sind die dort konfigurierten OTA-Updates möglich. Die Anzahl der Seiten muss in
-dieser ersten Firmwareversion noch mit `page_count` abgeglichen werden.
+dieser manuellen Vorlage mit `page_count` abgeglichen werden. Das betrifft nicht
+die neue Installer-Firmware `paperboard-e1002-installer.yaml`.
 
 ## Akkubetrieb und weitere Modelle
 

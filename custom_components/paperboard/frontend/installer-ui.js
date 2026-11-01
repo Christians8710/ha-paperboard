@@ -88,7 +88,9 @@ export class PaperBoardInstaller extends HTMLElement {
     this.phase='waiting';this.message='USB erfolgreich. Verbindung zu Home Assistant wird geprüft …';this.render();
     const end=Date.now()+180000;
     while(Date.now()<end&&this.isConnected){
-      const info=await this.context.hass.callWS({type:'paperboard/command',action:'get',entry_id:this.meta.entry_id});
+      let info={};
+      try{info=await this.context.hass.callWS({type:'paperboard/command',action:'get',entry_id:this.meta.entry_id});}
+      catch{this.message='USB erfolgreich. Home Assistant ist derzeit nicht erreichbar; die Geräteverbindung wird weiter geprüft …';}
       const status=info.device_status||{};
       if(status.boot_id&&status.boot_id!==this.meta.previous_boot_id&&Date.parse(status.last_seen)>=this.startedAt&&status.downloaded){this.connected=true;break;}
       await new Promise(resolve=>{this.pollResolve=resolve;this.pollTimer=setTimeout(resolve,3000);});

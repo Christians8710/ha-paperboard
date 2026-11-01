@@ -4,6 +4,10 @@ import base64
 from copy import deepcopy
 from aiohttp import web
 from sample import ROOT,NOW,sample,renderer,const,layout
+import importlib
+installer=importlib.import_module('paperboard_preview.installer')
+firmware=installer.load_firmware(ROOT/'custom_components'/'paperboard'/'firmware')
+credentials=installer.installation_credentials()
 
 document,data=sample()
 revision=0
@@ -12,7 +16,8 @@ settings={'name':'Wohnzimmer','model':'e1002','orientation':'native','power':'ma
 
 def public():
     return {'id':'demo','settings':settings,'size':[800,480],'revision':revision,'layout':document,
-            'last_request':None,'last_render':None,'warnings':[],'hardware_tested':False}
+            'last_request':None,'last_render':None,'warnings':[],'hardware_tested':False,
+            'installer_available':firmware['available'],'device_status':{}}
 
 
 async def index(request):
@@ -44,6 +49,7 @@ async def command(request):
             raw=renderer.render_png(doc,msg.get('page',0),settings,payload,NOW)
             result={'image':base64.b64encode(raw).decode(),'warnings':[]}
         elif action=='connection':result={'path':'/api/paperboard/image/demo/0','header':'X-PaperBoard-Token','token':'NUR-LOKALE-DEMO','refresh_interval':900,'pages':len(document['pages'])}
+        elif action=='installer_prepare':result={'firmware':firmware,'credentials':credentials,'token':'NUR-LOKALE-DEMO-NICHT-ZUM-ECHTEN-FLASHEN','entry_id':'demo','pages':len(document['pages']),'settings':settings,'previous_boot_id':None}
         else:raise ValueError('Unbekannte Aktion')
         return web.json_response(result)
     except (ValueError,KeyError,IndexError) as err:return web.json_response({'error':str(err)},status=400)
@@ -51,4 +57,5 @@ async def command(request):
 app=web.Application(client_max_size=250000)
 app.router.add_get('/',index);app.router.add_post('/command',command)
 app.router.add_static('/paperboard_static/',ROOT/'custom_components'/'paperboard'/'frontend')
+app.router.add_static('/paperboard_firmware/',ROOT/'custom_components'/'paperboard'/'firmware')
 if __name__=='__main__':web.run_app(app,host='127.0.0.1',port=8765)

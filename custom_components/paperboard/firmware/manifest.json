@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "model": "e1002",
+  "chip": "ESP32-S3",
+  "flash_size": "32MB",
+  "config_offset": 33488896,
+  "config_size": 65536,
+  "firmware": [
+    {
+      "kind": "factory",
+      "file": "paperboard-e1002.factory.bin",
+      "bytes": 1043216,
+      "sha256": "98abbdaac04d27a876dcf33332fe38a0b07ba5e07d360d01edb5d98ffebdf9e2"
+    },
+    {
+      "kind": "ota",
+      "file": "paperboard-e1002.ota.bin",
+      "bytes": 977680,
+      "sha256": "e0dd02624f61f5bed0fc90858dd67224848ec96b19049c7bf5cf8a6f3d1eec3a"
+    }
+  ]
+}
