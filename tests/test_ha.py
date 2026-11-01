@@ -1,5 +1,6 @@
 """Tests mit echtem HA-Testlauf unter Linux; lokal ohne HA explizit übersprungen."""
 from unittest.mock import patch
+from pathlib import Path
 import base64
 import pytest
 
@@ -10,6 +11,10 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 @pytest.fixture(autouse=True)
 def custom_integrations(enable_custom_integrations):
+    import custom_components
+    path=str(Path(__file__).resolve().parents[1]/"custom_components")
+    if path not in custom_components.__path__:
+        custom_components.__path__.append(path)
     yield
 
 
