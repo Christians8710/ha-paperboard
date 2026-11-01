@@ -5,6 +5,7 @@ import base64
 from copy import deepcopy
 from datetime import datetime, time, timedelta
 import hashlib
+import json
 import logging
 from pathlib import Path
 import secrets
@@ -22,6 +23,7 @@ from .schema import vol
 from .const import DOMAIN, VERSION, MODELS, display_size
 from .layout import default_layout, validate_layout
 from .renderer import render_png
+from .installer import load_firmware, installation_credentials, validate_base_url, validate_telemetry
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR, Platform.BUTTON]
@@ -29,7 +31,8 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 def settings_for(entry):
-    return {key: val for key, val in {**entry.data, **entry.options}.items() if key != "token"}
+    settings={**entry.data, **entry.options}
+    return {key:settings[key] for key in ('name','model','orientation','power','refresh_interval','template') if key in settings}
 
 
 class Display:
@@ -43,8 +46,12 @@ class Display:
         self.last_request = None
         self.last_render = None
         self.warnings = []
+        self.install_store = Store(hass,1,f"{DOMAIN}.installation.{entry.entry_id}")
+        self.installation = None
+        self.device_status = {}
 
     async def load(self):
+        self.installation=await self.install_store.async_load()
         saved = await self.store.async_load()
         if saved is not None:
             # Refuse to overwrite invalid saved documents silently.
@@ -58,6 +65,8 @@ class Display:
                   "size": display_size(settings_for(self.entry)), "revision": self.revision,
                   "last_request": self.last_request, "last_render": self.last_render,
                   "warnings": self.warnings, "hardware_tested": False}
+        result['device_status']=deepcopy(self.device_status)
+        result['installer_available']=settings_for(self.entry)['model']=='e1002' and self.hass.data[DOMAIN].get('firmware',{}).get('available',False)
         if with_layout:
             result["layout"] = deepcopy(self.layout)
         return result
@@ -110,7 +119,13 @@ class Display:
                 result[eid] = []
         await asyncio.gather(*(fetch(eid) for eid in calendars))
         self.warnings = warnings
-        return {"bindings": bindings, "calendar_sources": bindings["calendars"], "calendars": result, "states": states}
+        render_bindings=deepcopy(bindings)
+        for binding,measurement,unit in [('battery_entity','battery','%'),('temperature_entity','temperature','°C'),('humidity_entity','humidity','%')]:
+            if not render_bindings[binding] and measurement in self.device_status:
+                entity=f'sensor.paperboard_{self.entry.entry_id}_{measurement}'
+                render_bindings[binding]=entity
+                states[entity]={'state':str(self.device_status[measurement]),'attributes':{'unit_of_measurement':unit}}
+        return {"bindings": render_bindings, "calendar_sources": bindings["calendars"], "calendars": result, "states": states}
 
     async def render(self, page, draft=None):
         async with self.lock:
@@ -159,6 +174,34 @@ class ImageView(HomeAssistantView):
         return web.Response(body=raw, content_type="image/png", headers=headers)
 
 
+class DeviceSyncView(HomeAssistantView):
+    url='/api/paperboard/device/{entry_id}/sync'
+    name='api:paperboard:device_sync'
+    requires_auth=False
+
+    def __init__(self,hass):self.hass=hass
+
+    async def post(self,request,entry_id):
+        display=self.hass.data[DOMAIN]['displays'].get(entry_id)
+        supplied=request.headers.get('X-PaperBoard-Token','')
+        if display is None or not secrets.compare_digest(supplied.encode(),display.entry.data['token'].encode()):
+            raise web.HTTPUnauthorized()
+        if not display.installation or settings_for(display.entry)['model']!='e1002':
+            raise web.HTTPBadRequest(text='Keine passende E1002-Installation.')
+        content=bytearray()
+        async for chunk in request.content.iter_chunked(1024):
+            content.extend(chunk)
+            if len(content)>4096:raise web.HTTPRequestEntityTooLarge(max_size=4096,actual_size=len(content))
+        try:
+            status=validate_telemetry(json.loads(content),display.installation['install_id'])
+        except (ValueError,TypeError) as err:raise web.HTTPBadRequest(text=str(err)) from err
+        display.device_status={**status,'last_seen':datetime.now().astimezone().isoformat(),'address':request.remote or ''}
+        display.cache.clear()
+        settings=settings_for(display.entry)
+        return web.json_response({'pages':len(display.layout['pages']),
+            'refresh_interval':settings['refresh_interval'],'rotated':settings.get('orientation')=='rotated'})
+
+
 @websocket_api.websocket_command({vol.Required("type"): "paperboard/command",
     vol.Required("action"): str, vol.Optional("entry_id"): str,
     vol.Optional("layout"): dict, vol.Optional("page", default=0): int,
@@ -193,6 +236,18 @@ async def ws_command(hass, connection, msg):
         elif action == "refresh":
             display.cache.clear()
             result = {"ok": True}
+        elif action == 'installer_prepare':
+            firmware=hass.data[DOMAIN].get('firmware',{})
+            if settings_for(display.entry)['model']!='e1002':raise ValueError('Der USB-Installer unterstützt ausschließlich das E1002.')
+            if not firmware.get('available'):raise ValueError('Geprüfte Firmware fehlt. Bitte das vollständige PaperBoard-Update installieren.')
+            async with display.lock:
+                if display.installation is None:
+                    credentials=installation_credentials()
+                    await display.install_store.async_save(credentials)
+                    display.installation=credentials
+            result={'firmware':firmware,'credentials':display.installation,'token':display.entry.data['token'],
+                'entry_id':display.entry.entry_id,'pages':len(display.layout['pages']),
+                'settings':settings_for(display.entry),'previous_boot_id':display.device_status.get('boot_id')}
         else:
             raise ValueError("Unbekannte Aktion.")
     except (ValueError, KeyError, TypeError) as err:
@@ -204,8 +259,11 @@ async def ws_command(hass, connection, msg):
 async def async_setup(hass, config):
     hass.data.setdefault(DOMAIN, {"displays": {}})
     root = Path(__file__).parent
+    hass.data[DOMAIN]['firmware']=await hass.async_add_executor_job(load_firmware,root/'firmware')
     await hass.http.async_register_static_paths([StaticPathConfig("/paperboard_static", str(root / "frontend"), False)])
+    await hass.http.async_register_static_paths([StaticPathConfig('/paperboard_firmware',str(root/'firmware'),False)])
     hass.http.register_view(ImageView(hass))
+    hass.http.register_view(DeviceSyncView(hass))
     websocket_api.async_register_command(hass, ws_command)
     await panel_custom.async_register_panel(hass, frontend_url_path="paperboard",
         webcomponent_name="paperboard-panel", sidebar_title="PaperBoard", sidebar_icon="mdi:draw",
@@ -251,3 +309,4 @@ async def async_unload_entry(hass, entry):
 
 async def async_remove_entry(hass, entry):
     await Store(hass, 1, f"{DOMAIN}.{entry.entry_id}").async_remove()
+    await Store(hass,1,f'{DOMAIN}.installation.{entry.entry_id}').async_remove()

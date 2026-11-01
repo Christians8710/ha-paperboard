@@ -34,6 +34,10 @@ psram:
 logger:
   hardware_uart: UART0
 
+time:
+  - platform: sntp
+    id: network_time
+
 wifi:
   ssid: "PAPERBOARD-USB-CONFIG-REQUIRED"
   password: "not-used-before-usb-configuration"

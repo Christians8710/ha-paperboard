@@ -25,7 +25,9 @@ def main():
     env={**os.environ,'PLATFORMIO_CORE_DIR':str(target/'platformio')}
     subprocess.run([sys.executable,'-m','esphome','compile',str(target/'paperboard-e1002-installer.yaml')],
         check=True,env=env)
-    build=target/'.esphome'/'build'/'paperboard-e1002' / '.pioenvs'/'paperboard-e1002'
+    project=target/'.esphome'/'build'/'paperboard-e1002'
+    build=project/'build'
+    if not (build/'firmware.factory.bin').is_file():build=project/'.pioenvs'/'paperboard-e1002'
     factory=build/'firmware.factory.bin'
     ota=build/'firmware.ota.bin'
     if not ota.is_file():ota=build/'firmware.bin'
