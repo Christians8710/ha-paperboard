@@ -1,0 +1,10 @@
+PaperBoard – angenommenes Projektlogo
+Erstellt am 01.11.2026 mit der integrierten Bildgenerierung.
+Datei: paperboard-logo-entwurf.png
+Vom Nutzer am 01.11.2026 angenommen. Für das nächste Update der Integration
+und GitHub-Darstellung vorgesehen. Version 0.1.0 wird nicht nachträglich geändert.
+Die Datei bleibt als unveränderte Logoquelle erhalten; für die Integration
+geeignete Symbolgrößen und Varianten werden beim nächsten Update abgeleitet.
+
+Verwendeter Prompt:
+Use case: logo-brand. Create one polished original logo for the open-source project PaperBoard, an E-Paper dashboard editor for Home Assistant supporting many manufacturers. Deliver a horizontal logo lockup, large clean flat geometric icon on the left and exact wordmark "PaperBoard" on the right. Transparent background with genuine alpha, no background panel. The icon should combine an unmistakable uppercase P with a paper/display surface and two or three modular dashboard blocks, using strong elegant negative space; simple enough to read as a 32px integration icon. Dark petrol teal #204F49 dominant, a restrained soft sage #B9CCA6 accent, warm paper-white internal surfaces only where needed. Wordmark in dark petrol, precise contemporary humanist sans serif with friendly restrained character, medium/semibold, impeccable kerning, exact capitalization P and B. Optical balance, generous clear space, vector-like hard edges and flat fills. No gradients, no shadows, no 3D, no photographic objects, no glossy effects, no mockup, no calendar numbers, no Home Assistant or Seeed logos, no extra text, no decorative symbols. A single coherent final logo, not a sheet of alternatives. Aspect ratio wide landscape.

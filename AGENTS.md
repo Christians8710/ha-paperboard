@@ -1,6 +1,7 @@
 # PaperBoard
 
 - Zunächst alle nutzersichtbaren Texte und Dokumentation auf Deutsch.
+- Angenommenes Projektlogo: `assets/brand/paperboard-logo-entwurf.png` (Nutzerfreigabe 01.11.2026). Beim nächsten Update in Integration und GitHub-Darstellung einbinden; Logoquelle erhalten, kleine Symbolvarianten separat ableiten. Bestehende Version 0.1.0 nicht nachträglich verändern.
 - Herstellerunabhängige Geräteprofile; zunächst Seeed reTerminal E1001–E1004. E1002 ist das verfügbare Testgerät, andere Hardware ehrlich als ungetestet kennzeichnen.
 - Mehrere Displays, freier visueller Editor, Kalender als zentrale Vorlage, Netz- und Akkubetrieb.
 - Keine WLAN-/API-/OTA-/IP-Änderungen an vorhandenen Geräten ohne ausdrücklichen Auftrag. Kein automatisches Flashen ohne bewussten Start durch den Nutzer.
