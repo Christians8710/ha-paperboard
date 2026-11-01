@@ -1,6 +1,6 @@
-import {themeCSS,footerHTML} from './theme.js';
-import {installerCSS} from './installer-style.js';
-import {validateWifi,validateAddress,verifyFirmware} from './flash-core.js';
+import {themeCSS,footerHTML} from './theme.js?v=0.3.0';
+import {installerCSS} from './installer-style.js?v=0.3.0';
+import {validateWifi,validateAddress,verifyFirmware} from './flash-core.js?v=0.3.0';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const base64=bytes=>{let s='';for(let i=0;i<bytes.length;i+=16384)s+=String.fromCharCode(...bytes.subarray(i,i+16384));return btoa(s);};
 const from64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
@@ -17,7 +17,7 @@ export class PaperBoardInstaller extends HTMLElement {
         if(!response.ok)throw new Error('Die Firmwaredatei konnte nicht geladen werden.');
         this.firmware=new Uint8Array(await response.arrayBuffer());
       }
-      this.flashFunction=(await import('./flash.bundle.js')).flash;
+      this.flashFunction=(await import('./flash.bundle.js?v=0.3.0')).flash;
       if(globalThis.crypto?.subtle)await verifyFirmware(this.firmware,this.meta.firmware);
       this.phase='form';this.message='Firmware 0.3.0 geladen. Noch wurde kein USB-Gerät geöffnet.';this.render();
     }catch(e){this.phase='error';this.message=e.message||'Die Installationsvorbereitung ist fehlgeschlagen.';this.render();}

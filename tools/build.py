@@ -9,6 +9,7 @@ import zipfile
 from PIL import Image
 from sample import ROOT,NOW,sample,renderer,const
 import importlib
+import re
 
 
 def main():
@@ -17,6 +18,9 @@ def main():
     package=json.loads((ROOT/'paperboard-update.json').read_text(encoding='utf-8'))
     assert manifest['version']==package['version']==const.VERSION==renderer.RENDER_VERSION
     version=const.VERSION
+    for name in ('panel.js','installer-ui.js'):
+        asset_versions=re.findall(r'\?v=(\d+\.\d+\.\d+)',(source/'frontend'/name).read_text(encoding='utf-8'))
+        assert asset_versions and all(v==version for v in asset_versions), 'Frontend-Versionen stimmen nicht überein: '+name
     firmware=importlib.import_module('paperboard_preview.installer').load_firmware(source/'firmware')
     if not firmware.get('available'):raise RuntimeError('Geprüfte E1002-Firmware fehlt: '+firmware.get('error',''))
     for path in source.rglob('*.py'):

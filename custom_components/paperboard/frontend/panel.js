@@ -1,7 +1,7 @@
-import {newWidget, clampWidget, scaleLayout, clone, uid} from './editor.js';
-import './installer-ui.js';
-import {themeCSS,footerHTML} from './theme.js';
-import {panelCSS} from './panel-style.js';
+import {newWidget, clampWidget, scaleLayout, clone, uid} from './editor.js?v=0.3.0';
+import './installer-ui.js?v=0.3.0';
+import {themeCSS,footerHTML} from './theme.js?v=0.3.0';
+import {panelCSS} from './panel-style.js?v=0.3.0';
 
 const TYPES = {text:'Text', datetime:'Datum und Uhrzeit', sensor:'Sensorwert', weather:'Wetter', calendar:'Kalender', waste:'Abfalltermine', holiday:'Feiertage', status:'Gerätestatus', rectangle:'Rahmen', line:'Linie'};
 const COLORS = {black:'Schwarz',white:'Weiß',red:'Rot',yellow:'Gelb',blue:'Blau',green:'Grün'};

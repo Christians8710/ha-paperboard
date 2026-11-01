@@ -9,6 +9,7 @@
   langer Inhalte sowie vergrößerter Schrift.
 - Tastaturfokus im Installer, Escape zum Schließen und Fokus-Rückkehr zur auslösenden Aktion.
 - Erhalt von Eingaben bei Formular- und Speicherfehlern; verständliche Lade- und Fehlerzustände.
+- Versionsgebundenes Laden der Oberflächendateien verhindert veraltete Installer-Prüfungen aus dem Browser-Cache.
 - Unverändertes Logo im Offline-Installer ohne externen Bildabruf eingebettet.
 - Versionsgleiche E1002-Firmware für ausdrücklich gewählte Neuinstallationen.
 - Das Designupdate erfordert kein Flashen bestehender Displays.

@@ -32,6 +32,9 @@ Die Oberfläche wurde in Chrome mit erfundenen Daten geprüft:
 - Lade- und Leerzustand, Speicher- und Vorschaufehler sowie fehlende Firmware.
 - Erhalt eingegebener Werte bei Formular- und Speicherfehlern.
 - Lokal eingebettetes, unverändertes Logo im eigenständigen Installer.
+- Versionswechsel von 0.2.0 auf 0.3.0 im selben Browser: versionsgebundene
+  Moduladressen verhindern alte Installer-Prüfungen aus dem Cache. Die neue
+  Firmware wurde danach erfolgreich vorbereitet und geprüft, ohne USB-Zugriff.
 
 Die geprüften grundlegenden Farbpaarungen erreichen mindestens 6,64:1 Kontrast.
 Die Sichtprüfung ist keine umfassende Zertifizierung der Barrierefreiheit.
