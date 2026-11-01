@@ -1,42 +1,43 @@
 # PaperBoard
 
-E-Paper dashboards for Home Assistant.
+Frei gestaltbare E-Paper-Dashboards für Home Assistant.
 
-PaperBoard aims to provide a visual dashboard editor and guided device setup for E-Paper displays, starting with the Seeed reTerminal E1001, E1002, E1003 and E1004. The architecture is intended to accommodate other manufacturers later.
+PaperBoard soll einen visuellen Dashboard-Editor und eine geführte Geräteeinrichtung für E-Paper-Displays bieten. Den Anfang machen die Seeed reTerminal E1001, E1002, E1003 und E1004. Der Aufbau soll später auch Geräte anderer Hersteller ermöglichen.
 
-## Development status
+## Entwicklungsstand
 
-Early development. This repository currently contains the project outline, not an installable integration. No HACS release or device firmware is available here yet.
+Das Projekt befindet sich am Anfang der Entwicklung. Dieses Repository enthält bisher die Projektbeschreibung und den Entwicklungsplan, noch keine installierbare Integration. Eine HACS-Version oder Gerätefirmware steht hier noch nicht zum Download bereit.
 
-The starting point is an existing personal E1002 calendar renderer (version 1.2.6). Its private configuration and credentials are not included in this repository. The E1002 is the initial hardware test device; the other models require hardware validation.
+Die Grundlage bildet ein bestehender persönlicher E1002-Kalender-Renderer in Version 1.2.6. Persönliche Konfiguration und Zugangsdaten sind nicht Bestandteil dieses öffentlichen Repositorys. Das E1002 ist das erste verfügbare Testgerät; die übrigen Modelle benötigen noch Hardwaretests.
 
-## Planned features
+## Geplante Funktionen
 
-- Home Assistant custom integration distributed through HACS.
-- Guided model selection, USB firmware installation and device pairing.
-- A visual editor with free positioning, resizing, optional grid, alignment guides and preview.
-- Multiple displays, each with its own pages and settings.
-- Calendar, waste collection, holidays, weather, sensor values, text and device status widgets.
-- Calendar templates for today/upcoming events, 7 days and 14 days.
-- Mains and battery operating profiles with appropriate refresh behavior.
-- Device-specific resolution, palette, buttons and supported interaction features.
-- Local rendering in Home Assistant and image delivery to the display.
+- Home-Assistant-Integration mit Installation und Updates über HACS.
+- Geführte Modellauswahl, USB-Installation der Firmware und Verbindung des Geräts.
+- Visueller Editor mit freier Positionierung, Größenänderung, optionalem Raster, Ausrichtungshilfen und Vorschau.
+- Mehrere Displays mit jeweils eigenen Seiten und Einstellungen.
+- Bausteine für Kalender, Abfalltermine, Feiertage, Wetter, Sensorwerte, Text und Gerätestatus.
+- Kalendervorlagen für Heute/Nächste Termine, 7 Tage und 14 Tage.
+- Wählbare Betriebsarten für Netz- und Akkubetrieb mit passenden Aktualisierungen.
+- Geräteprofile für Auflösung, Farbpalette, Hardwaretasten und unterstützte Bedienfunktionen.
+- Lokale Bilderzeugung in Home Assistant und Übertragung an das Display.
+- Zunächst deutsche Bedienoberfläche und Dokumentation; weitere Sprachen können später folgen.
 
-## Development roadmap
+## Entwicklungsplan
 
-1. Separate reusable rendering, device profiles and personal configuration.
-2. Implement graphical setup, persistent storage and multi-display management.
-3. Build the visual editor and migrate the calendar layouts into editable templates.
-4. Add a guided installer and firmware update workflow.
-5. Validate on E1002, then work with community testers for E1001/E1003/E1004.
-6. Publish tested HACS-compatible releases and complete installation archives.
+1. Wiederverwendbare Darstellung, Geräteprofile und persönliche Konfiguration voneinander trennen.
+2. Grafische Einrichtung, dauerhafte Speicherung und Verwaltung mehrerer Displays umsetzen.
+3. Den visuellen Editor entwickeln und die Kalenderansichten als bearbeitbare Vorlagen übernehmen.
+4. Einen geführten Firmware-Installer und den Ablauf für Geräteupdates ergänzen.
+5. Auf dem E1002 testen und anschließend E1001, E1003 und E1004 mit Unterstützung weiterer Tester prüfen.
+6. Geprüfte HACS-kompatible Versionen und vollständige Installations-ZIPs veröffentlichen.
 
-## Release requirements
+## Vorgaben für Veröffentlichungen
 
-Every release must pass syntax, runtime, preview, package-content and version checks. Package, manifest and renderer versions must match. Release archives must not contain __pycache__, .pyc or .pyo files. Hardware test status and known limitations must be documented.
+Vor jeder Veröffentlichung werden Syntax, Laufzeit, Vorschauen, ZIP-Inhalt und Versionsgleichheit geprüft. Paket-, Manifest- und Renderer-Version müssen übereinstimmen. Installationsarchive dürfen keine `__pycache__`-Ordner und keine `.pyc`- oder `.pyo`-Dateien enthalten. Hardwaretests und bekannte Einschränkungen werden dokumentiert.
 
-Existing devices must not have Wi-Fi, API, OTA or IP settings changed without an explicit user request.
+WLAN-, API-, OTA- und IP-Einstellungen vorhandener Geräte werden nur auf ausdrücklichen Nutzerauftrag geändert.
 
-## Project scope
+## Unabhängiges Projekt
 
-PaperBoard is an independent community project and is not affiliated with Seeed Studio or Home Assistant.
+PaperBoard ist ein unabhängiges Community-Projekt und steht in keiner Verbindung zu Seeed Studio oder Home Assistant.
