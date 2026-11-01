@@ -1,14 +1,14 @@
 {
   "domain": "paperboard",
   "name": "PaperBoard",
-  "version": "0.1.0",
+  "after_dependencies": ["calendar", "weather"],
   "codeowners": ["@Christians8710"],
   "config_flow": true,
   "dependencies": ["frontend", "http", "panel_custom"],
-  "after_dependencies": ["calendar", "weather"],
   "documentation": "https://github.com/Christians8710/ha-paperboard",
-  "issue_tracker": "https://github.com/Christians8710/ha-paperboard/issues",
   "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/Christians8710/ha-paperboard/issues",
   "integration_type": "hub",
-  "requirements": ["Pillow==12.3.0"]
+  "requirements": [],
+  "version": "0.1.0"
 }

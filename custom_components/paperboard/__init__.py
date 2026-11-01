@@ -17,6 +17,7 @@ from homeassistant.const import EVENT_STATE_CHANGED, Platform
 from homeassistant.core import callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.storage import Store
+from homeassistant.helpers import config_validation as cv
 from .schema import vol
 from .const import DOMAIN, VERSION, MODELS, display_size
 from .layout import default_layout, validate_layout
@@ -24,6 +25,7 @@ from .renderer import render_png
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR, Platform.BUTTON]
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 def settings_for(entry):
