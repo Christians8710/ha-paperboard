@@ -97,9 +97,10 @@ class Display:
 
         async def fetch(eid):
             try:
+                lookahead=90 if eid in (bindings["waste_calendar"],bindings["holiday_calendar"]) else 14
                 async with asyncio.timeout(15):
                     response = await self.hass.services.async_call("calendar", "get_events",
-                        {"start_date_time": start.isoformat(), "end_date_time": (start+timedelta(days=90)).isoformat()},
+                        {"start_date_time": start.isoformat(), "end_date_time": (start+timedelta(days=lookahead)).isoformat()},
                         target={"entity_id": eid}, blocking=True, return_response=True)
                 # Bound data sent to renderer; calendar services can return lots of events.
                 result[eid] = (response or {}).get(eid, {}).get("events", [])[:2000]

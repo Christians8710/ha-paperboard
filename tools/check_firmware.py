@@ -1,5 +1,6 @@
 """ESPHome-Prüfung in einem temporären Ordner mit neu erzeugten Testschlüsseln."""
 import base64
+import os
 from pathlib import Path
 import secrets
 import shutil
@@ -16,9 +17,10 @@ with tempfile.TemporaryDirectory(prefix='paperboard-firmware-') as tmp:
         f'paperboard_api_key: "{base64.b64encode(secrets.token_bytes(32)).decode()}"\n'
         f'paperboard_ota_password: "{secrets.token_urlsafe(24)}"\n'
         f'paperboard_token: "{secrets.token_urlsafe(32)}"\n',encoding='utf-8')
+    env={**os.environ,'PLATFORMIO_CORE_DIR':str(target/'.platformio')}
     for args in [('config',),('compile','--only-generate')]:
         result=subprocess.run([sys.executable,'-m','esphome',*args,str(target/'paperboard-e1002.yaml')],
-            capture_output=True,text=True,encoding='utf-8',errors='replace')
+            capture_output=True,text=True,encoding='utf-8',errors='replace',env=env)
         if result.returncode:
             print(result.stdout[-5000:]);print(result.stderr[-3000:]);raise SystemExit(result.returncode)
         print('ESPHome '+ ' '.join(args)+': bestanden')

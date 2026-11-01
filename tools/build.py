@@ -34,7 +34,7 @@ def main():
                 (previews/name).write_bytes(raw);rendered.append(name)
     paths=[p for p in source.rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix not in ('.pyc','.pyo')]
     outputs=[]
-    for label,extra in [('Integration',[]),('Komplettpaket',list((ROOT/'esphome').rglob('*.yaml'))+list((ROOT/'esphome').rglob('*.md'))+[ROOT/'README.md',ROOT/'LICENSE',ROOT/'hacs.json',ROOT/'paperboard-update.json'])]:
+    for label,extra in [('Integration',[]),('Komplettpaket',list((ROOT/'esphome').rglob('*.yaml'))+list((ROOT/'esphome').rglob('*.md'))+list((ROOT/'docs').rglob('*.md'))+[ROOT/'README.md',ROOT/'LICENSE',ROOT/'hacs.json',ROOT/'paperboard-update.json'])]:
         archive=dist/f'PaperBoard-{label}-{version}.zip'
         with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED) as z:
             for path in sorted(paths+extra): z.write(path,path.relative_to(ROOT).as_posix())

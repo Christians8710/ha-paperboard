@@ -67,6 +67,7 @@ async def test_image_auth_etag_and_unload(hass, display, hass_client):
     client=await hass_client(hass)
     url=f"/api/paperboard/image/{display.entry_id}/0"
     assert (await client.get(url)).status==401
+    assert (await client.get(url,headers={"X-PaperBoard-Token":"wrong-display-key"})).status==401
     headers={"X-PaperBoard-Token":display.data["token"]}
     response=await client.get(url,headers=headers)
     assert response.status==200
@@ -85,3 +86,11 @@ async def test_multiple_displays_are_isolated(hass, display):
     a.layout["pages"][0]["name"]="Nur Display 1"
     assert b.layout["pages"][0]["name"]!="Nur Display 1"
     await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_read_only_user_cannot_read_display_keys(hass, display, hass_ws_client, hass_read_only_access_token):
+    client=await hass_ws_client(hass, access_token=hass_read_only_access_token)
+    await client.send_json({"id":1,"type":"paperboard/command","action":"connection","entry_id":display.entry_id})
+    response=await client.receive_json()
+    assert not response["success"]
+    assert response["error"]["code"]=="unauthorized"

@@ -86,6 +86,34 @@ def for_day(events, day, tz):
     return [e for e in events if e["start"] < end and e["end"] > start]
 
 
+def draw_day_extras(draw, data, day, now, height):
+    if height < 32:
+        return
+    x=6
+    for key in ("waste_calendar", "holiday_calendar"):
+        entity=data.get("bindings", {}).get(key, "")
+        titles=[]
+        for event in data.get("calendars", {}).get(entity, []):
+            try:
+                if event_time(event["start"], now.tzinfo).date()==day:
+                    title=str(event.get("summary") or "")
+                    if title and title not in titles: titles.append(title)
+            except (ValueError, TypeError, KeyError):
+                continue
+        if key=="waste_calendar":
+            for title in titles[:4]:
+                _,color,_=waste_kind(title)
+                draw.rectangle((x+2,24,x+9,32),fill=COLORS[color],outline="black")
+                draw.line((x+1,22,x+10,22),fill="black")
+                draw.line((x+4,20,x+7,20),fill="black")
+                x+=15
+        elif titles:
+            draw.line((x+6,20,x+6,32),fill=COLORS["red"],width=2)
+            draw.line((x,26,x+12,26),fill=COLORS["red"],width=2)
+            draw.line((x+2,22,x+10,30),fill=COLORS["red"])
+            draw.line((x+2,30,x+10,22),fill=COLORS["red"])
+
+
 def draw_event(draw, e, y, width, f, color):
     draw.rectangle((6, y+2, 15, y+11), fill=COLORS.get(e["color"], "black"), outline="black")
     stamp = "Ganztägig" if e["all_day"] else e["start"].strftime("%H:%M")
@@ -134,11 +162,13 @@ def calendar_widget(draw, w, data, now):
         cell = Image.new("RGB", (col_width, row_height), COLORS[w["background"]])
         cd = ImageDraw.Draw(cell)
         text(cd, (5, 4), f"{WEEKDAYS[day.weekday()]} {day:%d.%m.}", fb, w["color"], 95)
+        if col_width > 300:
+            draw_day_extras(cd,data,day,now,row_height)
         day_events = for_day(events, day, now.tzinfo)
         start_x = 100 if col_width > 300 else 6
         top = 4 if start_x == 100 else size+10
         spacing = size+3
-        available = max(0, (row_height-top-4)//spacing)
+        available = max(0, (row_height-top-1)//spacing)
         shown = min(len(day_events), available)
         for i, e in enumerate(day_events[:shown]):
             overflow = len(day_events)-shown if i==shown-1 else 0

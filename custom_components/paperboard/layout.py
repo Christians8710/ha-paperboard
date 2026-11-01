@@ -18,7 +18,7 @@ def default_layout(template="calendar"):
     pages = []
     for name, mode in [("Heute und nächste Termine", "today"), ("7 Tage", "7"), ("14 Tage", "14")]:
         pages.append({"id": f"page-{len(pages)+1}", "name": name,
-                      "widgets": deepcopy(header) + [widget("calendar", 20, 76, 760, 306, mode=mode, title=name, font_size=12 if mode=="14" else 16 if mode=="7" else 18),
+                      "widgets": deepcopy(header) + [widget("calendar", 20, 76, 760, 306, mode=mode, title=name, font_size=12 if mode=="14" else 14 if mode=="7" else 18),
                          widget("waste", 20, 388, 440, 36, font_size=13, title="Abfall"),
                          widget("holiday", 466, 388, 314, 36, font_size=13, title="Feiertag"),
                          widget("status", 20, 438, 760, 26, font_size=13)]})
