@@ -1,0 +1,170 @@
+# Öffentliche Firmware ohne fest eingebaute Zugangsdaten. Nur über den PaperBoard-Installer einrichten.
+esphome:
+  name: paperboard-e1002
+  name_add_mac_suffix: true
+  friendly_name: PaperBoard E1002
+  min_version: 2026.10.1
+  project:
+    name: Christians8710.PaperBoard
+    version: "0.2.0"
+  on_boot:
+    priority: 600
+    then:
+      - output.turn_on: battery_enable
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 32MB
+  partitions: partitions-e1002.csv
+  framework:
+    type: esp-idf
+    advanced:
+      enable_idf_experimental_features: true
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [paperboard_device]
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  hardware_uart: UART0
+
+wifi:
+  ssid: "PAPERBOARD-USB-CONFIG-REQUIRED"
+  password: "not-used-before-usb-configuration"
+  enable_on_boot: false
+  reboot_timeout: 0s
+
+api:
+  id: paperboard_api
+  encryption: {}
+  reboot_timeout: 0s
+
+ota:
+  - platform: esphome
+    id: paperboard_ota
+    password: ""
+
+# Die sichere individuelle API-/OTA-Konfiguration wird bei JEDEM Boot vor WLAN gelesen.
+# Bei fehlender USB-Konfiguration bleibt WLAN deaktiviert. Wiederherstellung erfolgt über USB.
+safe_mode:
+  disabled: true
+
+http_request:
+  id: paperboard_http
+  verify_ssl: true
+  follow_redirects: false
+  timeout: 15s
+  watchdog_timeout: 30s
+
+image:
+  - platform: online_image
+    id: paperboard_image
+    url: "https://invalid.example/paperboard-not-configured"
+    format: PNG
+    type: RGB565
+    buffer_size: 65536
+    update_interval: never
+    on_download_finished:
+      - lambda: 'id(paperboard_device_id).image_finished(cached);'
+    on_error:
+      - lambda: 'id(paperboard_device_id).image_error();'
+
+spi:
+  clk_pin: GPIO7
+  mosi_pin: GPIO9
+
+display:
+  - platform: epaper_spi
+    id: paperboard_display
+    model: Seeed-reTerminal-E1002
+    update_interval: never
+    lambda: 'it.image(0, 0, id(paperboard_image));'
+
+paperboard_device:
+  id: paperboard_device_id
+  image_id: paperboard_image
+  display_id: paperboard_display
+  http_id: paperboard_http
+  api_id: paperboard_api
+  ota_id: paperboard_ota
+  battery_id: battery_level
+  temperature_id: board_temperature
+  humidity_id: board_humidity
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO5
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Seite zurück"
+    filters: [{delayed_on: 30ms}]
+    on_press:
+      - lambda: 'id(paperboard_device_id).page(-1);'
+  - platform: gpio
+    pin:
+      number: GPIO4
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Seite weiter"
+    filters: [{delayed_on: 30ms}]
+    on_press:
+      - lambda: 'id(paperboard_device_id).page(1);'
+  - platform: gpio
+    pin:
+      number: GPIO3
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Bild neu laden"
+    filters: [{delayed_on: 30ms}]
+    on_press:
+      - lambda: 'id(paperboard_device_id).refresh(true);'
+
+i2c:
+  sda: GPIO19
+  scl: GPIO20
+output:
+  - platform: gpio
+    pin: GPIO21
+    id: battery_enable
+sensor:
+  - platform: sht4x
+    temperature:
+      id: board_temperature
+      name: "Temperatur"
+    humidity:
+      id: board_humidity
+      name: "Luftfeuchtigkeit"
+    update_interval: 60s
+  - platform: adc
+    pin: GPIO1
+    id: battery_voltage
+    name: "Akkuspannung"
+    attenuation: 12db
+    update_interval: 60s
+    filters: [{multiply: 2.0}]
+    on_value:
+      - component.update: battery_level
+  - platform: template
+    id: battery_level
+    name: "Akku"
+    unit_of_measurement: "%"
+    device_class: battery
+    state_class: measurement
+    update_interval: never
+    lambda: 'return id(battery_voltage).state;'
+    filters:
+      - calibrate_linear: [4.15 -> 100.0, 3.85 -> 70.0, 3.68 -> 40.0, 3.41 -> 10.0, 3.27 -> 0.0]
+      - clamp: {min_value: 0, max_value: 100}
+
+button:
+  - platform: template
+    name: "Bild jetzt prüfen"
+    on_press:
+      - lambda: 'id(paperboard_device_id).refresh();'

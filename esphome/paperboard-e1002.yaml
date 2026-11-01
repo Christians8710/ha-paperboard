@@ -1,4 +1,4 @@
-# PaperBoard 0.1.0 – Vorlage ausschließlich für NEUE E1002-Geräte.
+# PaperBoard 0.2.0 – Vorlage ausschließlich für NEUE E1002-Geräte.
 # Nicht über eine bestehende Konfiguration kopieren.
 substitutions:
   device_name: paperboard-e1002
@@ -15,7 +15,7 @@ esphome:
   min_version: 2026.10.1
   project:
     name: Christians8710.PaperBoard
-    version: "0.1.0"
+    version: "0.2.0"
   on_boot:
     priority: 600
     then:

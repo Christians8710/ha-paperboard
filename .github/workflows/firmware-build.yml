@@ -1,0 +1,32 @@
+name: E1002-Firmware vollständig bauen
+on:
+  push:
+    paths:
+      - 'esphome/**'
+      - 'tools/build_firmware.py'
+      - '.github/workflows/firmware-build.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  e1002:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/paperboard-build/platformio
+          key: e1002-esphome-2026.10.1-${{ hashFiles('esphome/paperboard-e1002-installer.yaml') }}
+          restore-keys: e1002-esphome-2026.10.1-
+      - run: python -m pip install esphome==2026.10.1
+      - name: Firmware einschließlich Bootloader vollständig kompilieren
+        run: python tools/build_firmware.py --work-dir "${{ runner.temp }}/paperboard-build"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PaperBoard-E1002-Firmware
+          path: custom_components/paperboard/firmware/
+          if-no-files-found: error
