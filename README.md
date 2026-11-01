@@ -165,6 +165,18 @@ Vor Veröffentlichungen werden Syntax, Laufzeit, Vorschauen, Paketinhalt und
 Versionsgleichheit geprüft. Hardwareteststatus wird separat ausgewiesen.
 Installationsarchive enthalten keine `__pycache__`, `.pyc` oder `.pyo`.
 
+## ❤️ Projekt unterstützen
+
+Dieses Projekt wird kostenlos zur Verfügung gestellt und kontinuierlich weiterentwickelt.
+
+Wenn dir die Software gefällt und du die Weiterentwicklung unterstützen möchtest, kannst du dies freiwillig über GitHub Sponsors tun.
+
+❤️ [**Projekt über GitHub Sponsors unterstützen**](https://github.com/sponsors/Christians8710)
+
+Deine Unterstützung hilft bei der Weiterentwicklung, Fehlerbehebung, Wartung und Umsetzung neuer Funktionen.
+
+Vielen Dank für deine Unterstützung!
+
 ## Lizenz und Projekt
 
 Quellcode: [MIT-Lizenz](LICENSE). Die unveränderten Ubuntu-Schriften unterliegen
