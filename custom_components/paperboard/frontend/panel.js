@@ -164,7 +164,7 @@ class PaperBoardPanel extends HTMLElement {
     on('[data-add]','click',e=>{if(this.currentPage.widgets.length>=40)return this.message('Höchstens 40 Bausteine pro Seite.');this.checkpoint();const b=newWidget(e.currentTarget.dataset.add,this.doc);this.currentPage.widgets.push(b);this.selected=b.id;this.changed();});
     on('[data-select]','click',e=>{this.selected=e.currentTarget.dataset.select;this.render();});
     on('[data-action]','click',e=>this.action(e.currentTarget.dataset.action));
-    on('#pageName','change',e=>{this.checkpoint();this.currentPage.name=e.target.value.slice(0,80);this.changed();});
+    on('#pageName','input',e=>{this.fieldChanged(e.target);this.currentPage.name=e.target.value.slice(0,80);});
     on('#addPage','click',()=>{this.checkpoint();this.doc.pages.push({id:uid(),name:'Neue Seite',widgets:[]});this.page=this.doc.pages.length-1;this.selected=null;this.changed();});
     on('#snap','change',e=>{this.snap=e.target.checked;this.render();});
     on('#autoPreview','change',e=>{this.autoPreview=e.target.checked;this.schedulePreview();});on('#preview','click',()=>this.showPreview());
@@ -190,6 +190,7 @@ class PaperBoardPanel extends HTMLElement {
     const b=this.currentWidget, start={...b}, resize=Boolean(e.target.closest('[data-resize]'));
     const stage=this.shadowRoot.querySelector('#stage'), rect=stage.getBoundingClientRect();
     const sx=e.clientX,sy=e.clientY; let moved=false;
+    const previousRedo=this.redo;
     this.checkpoint();node.classList.add('selected');node.setPointerCapture(e.pointerId);
     const move=ev=>{
       let dx=(ev.clientX-sx)*this.doc.width/rect.width,dy=(ev.clientY-sy)*this.doc.height/rect.height;
@@ -198,7 +199,7 @@ class PaperBoardPanel extends HTMLElement {
       clampWidget(b,this.doc);moved=moved||Math.abs(dx)+Math.abs(dy)>0;
       node.style.left=b.x/this.doc.width*100+'%';node.style.top=b.y/this.doc.height*100+'%';node.style.width=b.w/this.doc.width*100+'%';node.style.height=b.h/this.doc.height*100+'%';
     };
-    const finish=()=>{node.removeEventListener('pointermove',move);node.removeEventListener('pointerup',finish);node.removeEventListener('pointercancel',finish);if(moved)this.changed();else{this.undo.pop();this.render();}};
+    const finish=()=>{node.removeEventListener('pointermove',move);node.removeEventListener('pointerup',finish);node.removeEventListener('pointercancel',finish);if(moved)this.changed();else{this.undo.pop();this.redo=previousRedo;this.render();}};
     node.addEventListener('pointermove',move);node.addEventListener('pointerup',finish);node.addEventListener('pointercancel',finish);
   }
   action(action){

@@ -26,7 +26,8 @@ Das maßgebliche Ergebnis für den jeweiligen Commit steht unter
 ## Manuelle Sicht- und Bedienprüfung
 
 Der Editor wurde in Chrome mit erfundenen Daten geöffnet. Geprüft wurden
-Baustein hinzufügen, Text ändern, Vorschau laden und Layout speichern.
+Baustein hinzufügen, Text ändern, per Maus verschieben und vergrößern,
+Vorschau laden und Layout speichern.
 Eine verlorene Texteingabe wurde dabei behoben. Normale und dichte
 Kalenderansichten wurden als PNG kontrolliert. Überlaufzähler erhalten einen
 eigenen Bereich neben dem letzten sichtbaren Termin.
