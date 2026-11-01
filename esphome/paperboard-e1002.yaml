@@ -1,0 +1,192 @@
+# PaperBoard 0.1.0 – Vorlage ausschließlich für NEUE E1002-Geräte.
+# Nicht über eine bestehende Konfiguration kopieren.
+substitutions:
+  device_name: paperboard-e1002
+  friendly_name: PaperBoard E1002
+  # Integration → PaperBoard → Gerät & Verbindung → Verbindungsdaten.
+  ha_base_url: "https://homeassistant.example.org:8123"
+  paperboard_entry: "DEINE_DISPLAY_KENNUNG"
+  page_count: "3"
+  refresh_interval: 15min
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  min_version: 2026.10.1
+  project:
+    name: Christians8710.PaperBoard
+    version: "0.1.0"
+  on_boot:
+    priority: 600
+    then:
+      - output.turn_on: battery_enable
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 32MB
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+
+api:
+  encryption:
+    key: !secret paperboard_api_key
+
+ota:
+  - platform: esphome
+    password: !secret paperboard_ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  on_connect:
+    then:
+      - delay: 5s
+      - component.update: paperboard_image
+
+globals:
+  - id: paperboard_page
+    type: int
+    restore_value: true
+    initial_value: '0'
+
+script:
+  - id: load_page
+    mode: restart
+    then:
+      - online_image.set_url:
+          id: paperboard_image
+          url: !lambda |-
+            return std::string("${ha_base_url}/api/paperboard/image/${paperboard_entry}/") + std::to_string(id(paperboard_page));
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO5
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Seite zurück"
+    filters:
+      - delayed_on: 30ms
+    on_press:
+      then:
+        - lambda: 'id(paperboard_page) = (id(paperboard_page) + ${page_count} - 1) % ${page_count};'
+        - script.execute: load_page
+  - platform: gpio
+    pin:
+      number: GPIO4
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Seite weiter"
+    filters:
+      - delayed_on: 30ms
+    on_press:
+      then:
+        - lambda: 'id(paperboard_page) = (id(paperboard_page) + 1) % ${page_count};'
+        - script.execute: load_page
+  - platform: gpio
+    pin:
+      number: GPIO3
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Bild neu laden"
+    filters:
+      - delayed_on: 30ms
+    on_press:
+      then:
+        - script.execute: load_page
+
+http_request:
+  verify_ssl: true
+  timeout: 20s
+  watchdog_timeout: 30s
+
+image:
+  - platform: online_image
+    id: paperboard_image
+    url: "${ha_base_url}/api/paperboard/image/${paperboard_entry}/0"
+    format: PNG
+    type: RGB565
+    buffer_size: 65536
+    update_interval: ${refresh_interval}
+    request_headers:
+      X-PaperBoard-Token: !secret paperboard_token
+    on_download_finished:
+      then:
+        - lambda: |-
+            if (!cached) id(paperboard_display).update();
+    on_error:
+      then:
+        - logger.log:
+            level: ERROR
+            format: "PaperBoard-Bild konnte nicht geladen werden"
+
+spi:
+  id: epaper_spi_bus
+  clk_pin: GPIO7
+  mosi_pin: GPIO9
+
+display:
+  - platform: epaper_spi
+    id: paperboard_display
+    model: Seeed-reTerminal-E1002
+    update_interval: never
+    lambda: |-
+      it.image(0, 0, id(paperboard_image));
+
+i2c:
+  sda: GPIO19
+  scl: GPIO20
+
+output:
+  - platform: gpio
+    pin: GPIO21
+    id: battery_enable
+
+sensor:
+  - platform: sht4x
+    temperature:
+      name: "Temperatur"
+    humidity:
+      name: "Luftfeuchtigkeit"
+    update_interval: 60s
+  - platform: adc
+    pin: GPIO1
+    id: battery_voltage
+    name: "Akkuspannung"
+    attenuation: 12db
+    update_interval: 60s
+    filters:
+      - multiply: 2.0
+    on_value:
+      then:
+        - component.update: battery_level
+  - platform: template
+    id: battery_level
+    name: "Akku"
+    unit_of_measurement: "%"
+    device_class: battery
+    state_class: measurement
+    update_interval: never
+    lambda: 'return id(battery_voltage).state;'
+    filters:
+      - calibrate_linear:
+          - 4.15 -> 100.0
+          - 3.85 -> 70.0
+          - 3.68 -> 40.0
+          - 3.41 -> 10.0
+          - 3.27 -> 0.0
+      - clamp:
+          min_value: 0
+          max_value: 100
+
+button:
+  - platform: template
+    name: "Bild jetzt prüfen"
+    on_press:
+      - component.update: paperboard_image

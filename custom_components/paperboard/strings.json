@@ -1,0 +1,28 @@
+{
+  "title": "PaperBoard",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Dein PaperBoard-Display",
+        "description": "Wähle ein Geräteprofil. Es wird noch keine Firmware installiert und kein vorhandenes Gerät verändert. Die Bildprofile für E1001, E1003 und E1004 sind experimentell. Der gewünschte Abrufabstand muss zusätzlich in der Gerätefirmware eingestellt werden.",
+        "data": {"name":"Name","model":"Displaymodell","orientation":"Ausrichtung","power":"Betriebsart","refresh_interval":"Gewünschter Abrufabstand (Sekunden)"}
+      },
+      "template": {
+        "title":"Mit einer Vorlage beginnen",
+        "description":"Du kannst später alle Bausteine frei bearbeiten. Kalender und Sensoren wählst du anschließend im Bereich PaperBoard → Datenquellen aus.",
+        "data":{"template":"Vorlage"}
+      }
+    },
+    "error":{"invalid_name":"Bitte einen Namen mit 1 bis 80 Zeichen eingeben."}
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title":"Displayeinstellungen",
+        "description":"Diese Einstellungen betreffen die Bildausgabe. Sie ändern weder WLAN/API/OTA/IP noch automatisch die Betriebsart der Gerätefirmware.",
+        "data":{"name":"Name","model":"Displaymodell","orientation":"Ausrichtung","power":"Betriebsart","refresh_interval":"Gewünschter Abrufabstand (Sekunden)"}
+      }
+    },
+    "error":{"invalid_name":"Bitte einen Namen mit 1 bis 80 Zeichen eingeben."}
+  }
+}
