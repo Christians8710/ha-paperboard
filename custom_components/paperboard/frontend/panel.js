@@ -112,9 +112,9 @@ class PaperBoardPanel extends HTMLElement {
   }
   widgetHTML(b){
     let content=b.text||b.title||TYPES[b.type];
-    if(b.type==='datetime')content='Sonntag, 01. November · 09:00';
+    if(b.type==='datetime')content=new Intl.DateTimeFormat('de-DE',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
     if(['sensor','weather'].includes(b.type))content=(b.title||TYPES[b.type])+'\n'+(this.hass.states[b.entity]?.state||'Entität auswählen');
-    if(b.type==='calendar')content=(b.title||'Kalender')+'\n'+(b.mode==='today'?'Heute · Morgen · Nächste Termine':b.mode+' Tage')+'\nKalender in „Datenquellen“ auswählen';
+    if(b.type==='calendar')content=(b.title||'Kalender')+'\n'+(b.mode==='today'?'Heute · Morgen · Nächste Termine':b.mode+' Tage')+'\n'+(this.doc.bindings.calendars.length?this.doc.bindings.calendars.map(c=>c.label||c.entity).join(' · '):'Kalender in „Datenquellen“ auswählen');
     return `<div data-widget="${esc(b.id)}" tabindex="0" role="button" aria-label="${esc(TYPES[b.type])} auswählen" class="widget ${b.id===this.selected?'selected':''} ${b.type}" style="left:${b.x/this.doc.width*100}%;top:${b.y/this.doc.height*100}%;width:${b.w/this.doc.width*100}%;height:${b.h/this.doc.height*100}%;--widget-color:${b.color};--widget-bg:${b.background};font-size:${b.font_size/this.doc.width*100}cqw;text-align:${b.align||'left'};font-weight:${b.bold?700:400};${b.border?'box-shadow:inset 0 0 0 1px '+b.color+';':''}"><span>${esc(content)}</span>${b.id===this.selected?'<i class="resize" data-resize="1" title="Größe ändern"></i>':''}</div>`;
   }
   inspectorHTML(w){

@@ -7,6 +7,7 @@ import importlib
 from pathlib import Path
 import sys
 import types
+from unittest.mock import patch
 import pytest
 from PIL import Image
 
@@ -104,3 +105,10 @@ def test_sensor_value_changes_image():
     data=example_data();a=renderer.render_png(validate(doc),0,{"model":"e1002"},data,NOW)
     data["states"]["sensor.akku"]["state"]="20"
     assert a!=renderer.render_png(validate(doc),0,{"model":"e1002"},data,NOW)
+
+
+def test_dense_day_keeps_a_real_event_visible_next_to_overflow():
+    doc=validate(defaults());data=example_data(True)
+    with patch.object(renderer,"draw_event", wraps=renderer.draw_event) as drawing:
+        renderer.render_png(doc,1,{"model":"e1002"},data,NOW)
+    assert drawing.call_count >= 7  # Each busy day shows a real event, not only a count.

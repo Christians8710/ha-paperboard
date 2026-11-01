@@ -137,15 +137,18 @@ def calendar_widget(draw, w, data, now):
         day_events = for_day(events, day, now.tzinfo)
         start_x = 100 if col_width > 300 else 6
         top = 4 if start_x == 100 else size+10
-        available = max(0, (row_height-top-4)//(size+6))
-        shown = available if len(day_events) <= available else max(0, available-1)
+        spacing = size+3
+        available = max(0, (row_height-top-4)//spacing)
+        shown = min(len(day_events), available)
         for i, e in enumerate(day_events[:shown]):
-            line_img = Image.new("RGB", (max(1, col_width-start_x-4), size+6), COLORS[w["background"]])
+            overflow = len(day_events)-shown if i==shown-1 else 0
+            reserved = 48 if overflow else 0
+            line_img = Image.new("RGB", (max(1, col_width-start_x-4-reserved), spacing), COLORS[w["background"]])
             draw_event(ImageDraw.Draw(line_img), e, 0, line_img.width, f, w["color"])
-            cell.paste(line_img, (start_x, top+i*(size+6)))
-        if len(day_events) > shown and available:
-            text(cd, (start_x+5, top+shown*(size+6)), f"+{len(day_events)-shown} weitere", fb, w["color"], col_width-start_x-10)
-        elif not day_events:
+            cell.paste(line_img, (start_x, top+i*spacing))
+            if overflow:
+                text(cd, (col_width-reserved, top+i*spacing), f"+{overflow}", fb, w["color"], reserved-4)
+        if not day_events:
             text(cd, (start_x+5, top), "Keine Termine", fb, w["color"], col_width-start_x-10)
         cd.line((4, row_height-1, col_width-4, row_height-1), fill=COLORS[w["color"]])
         draw._image.paste(cell, (x, y))
