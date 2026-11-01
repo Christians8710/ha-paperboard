@@ -1,6 +1,6 @@
 # Änderungen
 
-## 0.3.0 – 01.11.2026
+## 0.3.0 – 02.11.2026
 
 - Gemeinsames Petrol-Design mit zentralen Gestaltungswerten, türkisfarbenen
   Auswahl- und Fokusmarkierungen sowie goldenen Hauptaktionen.

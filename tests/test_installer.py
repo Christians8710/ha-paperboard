@@ -53,6 +53,14 @@ def test_valid_device_address():
     assert installer.validate_base_url('http://homeassistant.local:8123/')=='http://homeassistant.local:8123'
 
 
+def test_existing_020_device_remains_compatible_without_flashing():
+    raw={'model':'e1002','version':'0.2.0','install_id':'a'*32,'boot_id':'123',
+         'downloaded':True,'battery':82,'temperature':21.5,'humidity':48}
+    result=installer.validate_telemetry(raw,'a'*32)
+    assert result=={'version':'0.2.0','boot_id':'123','downloaded':True,
+                    'battery':82,'temperature':21.5,'humidity':48}
+
+
 @pytest.mark.parametrize('patch',[{'battery':101},{'battery':True},{'temperature':float('nan')},{'humidity':-1},{'version':'<script>'},{'model':'e1004'},{'install_id':'wrong'}])
 def test_bad_telemetry(patch):
     raw={'model':'e1002','version':'0.3.0','install_id':'a'*32,'boot_id':'123',**patch}

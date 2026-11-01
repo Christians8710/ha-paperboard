@@ -13,6 +13,12 @@ Die konkreten Ergebnisse stehen in den
 [GitHub-Actions-Läufen](https://github.com/Christians8710/ha-paperboard/actions)
 und im angehängten Prüfbericht der Veröffentlichung.
 
+Die gebündelte E1002-Firmware stammt aus dem erfolgreichen vollständigen
+[Build 77687ef](https://github.com/Christians8710/ha-paperboard/actions/runs/41359717920)
+mit ESPHome 2026.10.1. Der Firmwarequellcode wurde danach nicht verändert.
+Der zusätzliche Kompatibilitätstest bestätigt die Annahme von Gerätemeldungen
+der bestehenden Firmware 0.2.0 ohne erneutes Flashen.
+
 ## Sicht- und Bedienprüfung der Gestaltung
 
 Die Oberfläche wurde in Chrome mit erfundenen Daten geprüft:
