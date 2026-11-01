@@ -243,7 +243,7 @@ class PaperBoardPanel extends HTMLElement {
     this.busy=true;
     this.shadowRoot.querySelectorAll('input,select,textarea,button').forEach(el=>el.disabled=true);
     const installer=document.createElement('paperboard-installer');
-    installer.context={hass:this.hass,entry_id:this.current.id,defaultBaseUrl:location.origin};
+    installer.context={hass:this.hass,entry_id:this.current.id,defaultBaseUrl:location.origin,previewOnly:this.hass.paperboardPreviewOnly===true};
     installer.addEventListener('installer-close',()=>{this.busy=false;this.render();this.call('get',{entry_id:this.current.id}).then(info=>{this.current=info;this.render();}).catch(()=>{});});
     this.shadowRoot.append(installer);
   }

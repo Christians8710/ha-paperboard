@@ -27,6 +27,7 @@ export class PaperBoardInstaller extends HTMLElement {
       :host{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background:#142e2877;padding:20px;font:14px system-ui;color:#203f36}*{box-sizing:border-box}.box{background:#fcfdf8;border-radius:16px;padding:26px;max-width:700px;width:100%;max-height:94vh;overflow:auto;box-shadow:0 20px 80px #122e2833}header{display:flex;align-items:center;justify-content:space-between;gap:12px}h1{font-size:23px;margin:0}h2{font-size:17px}p{line-height:1.6;color:#637365}button{font:inherit;border:1px solid #cbd6c5;border-radius:7px;padding:10px 14px;cursor:pointer;background:white;color:#244c3f}button.primary{background:#204f49;color:white;border:0}button:disabled{opacity:.5;cursor:default}label{display:block;margin:14px 0;font-size:13px}input{font:inherit;width:100%;border:1px solid #cbd6c5;border-radius:6px;padding:9px;margin-top:5px;background:white}input[type=checkbox]{width:auto;margin:0 8px 0 0}label.check{display:flex;align-items:flex-start;line-height:1.5}.note{padding:13px;background:#eaf0df;border-radius:8px}.warning{background:#fff0d9}.error{background:#fae6df;color:#7b352a}.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.progress{height:12px;background:#e0e7d8;border-radius:8px;overflow:hidden;margin:18px 0}.progress span{height:100%;background:#356d50;display:block}.small{font-size:12px}a{color:#245d48}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px}dl{display:grid;grid-template-columns:150px 1fr;gap:8px}dd{margin:0}button:focus-visible,input:focus-visible{outline:3px solid #8fab7b;outline-offset:2px}
       </style><div class="box" role="dialog" aria-modal="true" aria-labelledby="title"><header><h1 id="title">E1002 automatisch einrichten</h1>${!offline?`<button id="close" ${this.closeable?'':'disabled'} aria-label="Installer schließen">×</button>`:''}</header>
       <p>USB-Installation für ein <strong>Seeed reTerminal E1002</strong>. Keine YAML-Datei und keine lokale Kompilierung erforderlich.</p>
+      ${this.context.previewOnly?'<p class="note warning">Lokale Oberflächenprüfung: USB-Zugriff und Schreiben sind hier deaktiviert.</p>':''}
       <div class="note ${this.phase==='error'?'error':''}" role="status">${esc(this.message)}</div>
       ${this.phase==='form'?`
         ${!serial?`<p class="note warning">Diese Home-Assistant-Adresse erlaubt hier keinen USB-Zugriff. Lade den eigenständigen Installer herunter und öffne die HTML-Datei in Chrome oder Edge auf demselben Computer. Die Datei enthält die Zugangsdaten dieses Displays; nicht weitergeben. Es werden keine Skripte von externen Servern geladen.</p>`:''}
@@ -35,7 +36,7 @@ export class PaperBoardInstaller extends HTMLElement {
         ${serial?`<label>2,4-GHz-WLAN-Name<input id="ssid" maxlength="32" autocomplete="off" required></label><label>WLAN-Passwort<input id="password" type="password" autocomplete="new-password" maxlength="64"></label><label class="check"><input id="openWifi" type="checkbox">Dieses WLAN hat ausdrücklich kein Passwort.</label>
         <label class="check note warning"><input id="consent" type="checkbox" required>Ich habe das richtige E1002 angeschlossen. Die Installation ersetzt die vorhandene Firmware und löscht deren Einstellungen einschließlich WLAN, API, OTA und IP. Vorhandene Konfiguration habe ich gesichert; diese Neuinstallation soll neue geräteeigene Zugänge und DHCP verwenden.</label>
         <p class="small">Das USB-Gerät wählst du selbst im Browser aus. Anderen seriellen Monitor schließen. Bei Verbindungsproblemen den Downloadmodus nach Seeed-Anleitung aktivieren.</p>`:''}
-        <div class="buttons">${serial?'<button class="primary" id="start" type="submit">USB-Gerät wählen und installieren</button>':''}${!offline?'<button id="standalone" type="button">Eigenständigen USB-Installer herunterladen</button>':''}</div></form>
+        <div class="buttons">${serial?`<button class="primary" id="start" type="submit" ${this.context.previewOnly?'disabled':''}>USB-Gerät wählen und installieren</button>`:''}${!offline?'<button id="standalone" type="button">Eigenständigen USB-Installer herunterladen</button>':''}</div></form>
         ${offline&&!serial?'<p>Bitte diese Datei mit einer aktuellen Desktop-Version von Chrome oder Edge öffnen. Der Browser muss lokale Dateien und Web Serial zulassen.</p>':''}
       `:''}
       ${['writing','waiting','done'].includes(this.phase)?`<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${this.percent}"><span style="width:${this.percent}%"></span></div><p id="progressText">${esc(this.progressText||'')}</p>`:''}
@@ -55,6 +56,7 @@ export class PaperBoardInstaller extends HTMLElement {
   }
   async start(){
     if(this.running)return;
+    if(this.context.previewOnly){this.message='USB-Zugriff ist in der lokalen Oberflächenprüfung deaktiviert.';this.render();return;}
     let portPromise,config;
     try{
       const root=this.shadowRoot;
@@ -109,7 +111,7 @@ export class PaperBoardInstaller extends HTMLElement {
       const response=await fetch('/paperboard_static/offline.bundle.js',{cache:'no-store'});
       if(!response.ok)throw new Error('Der eigenständige Installer konnte nicht geladen werden.');
       const script=(await response.text()).replace(/<\/script/gi,'<\\/script');
-      const data=JSON.stringify({meta:this.meta,firmwareBase64:base64(this.firmware),defaultBaseUrl:address}).replace(/</g,'\\u003c');
+      const data=JSON.stringify({meta:this.meta,firmwareBase64:base64(this.firmware),defaultBaseUrl:address,previewOnly:this.context.previewOnly===true}).replace(/</g,'\\u003c');
       this.download('PaperBoard-E1002-USB-Installer.html',`<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PaperBoard – E1002 USB-Installer</title><body><script id="paperboard-config" type="application/json">${data}</script><script>${script}</script></body></html>`,'text/html');
       this.message='Installerdatei heruntergeladen. In Chrome oder Edge öffnen. Sie enthält private Display-Zugänge; nicht weitergeben.';this.render();
     }catch(e){this.message=e.message;this.render();}

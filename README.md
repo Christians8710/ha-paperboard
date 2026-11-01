@@ -122,7 +122,7 @@ Platz haben. Weitere Termine erscheinen als Überlaufhinweis.
 Sie richtet neue geräteeigene API-/OTA-Zugänge und DHCP ein. Das geschieht erst
 nach ausdrücklicher Bestätigung im Installer. Die heruntergeladene Installerdatei
 enthält private Display-Zugänge: sicher aufbewahren und nicht weitergeben.
-Nach erfolgreicher Installation zusätzlich die Gerätezutritte als JSON sichern.
+Nach erfolgreicher Installation zusätzlich die Gerätezugänge als JSON sichern.
 WLAN-Daten werden im Browser eingegeben und über USB an das Gerät geschrieben;
 sie werden nicht in der öffentlich herunterladbaren Firmware mitgeliefert.
 
