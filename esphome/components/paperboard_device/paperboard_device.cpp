@@ -64,7 +64,7 @@ void PaperBoardDevice::setup() {
   ota_->set_auth_password(ota_password_);
   display_->set_rotation(rotated_ ? display::DISPLAY_ROTATION_90_DEGREES : display::DISPLAY_ROTATION_0_DEGREES);
   image_->add_request_header("X-PaperBoard-Token", token_);
-  ESP_LOGI(TAG, "PaperBoard 0.2.0: USB-Konfiguration geladen (keine Zugangsdaten im Protokoll).");
+  ESP_LOGI(TAG, "PaperBoard 0.3.0: USB-Konfiguration geladen (keine Zugangsdaten im Protokoll).");
 }
 
 void PaperBoardDevice::loop() {
@@ -78,7 +78,7 @@ void PaperBoardDevice::loop() {
 
 void PaperBoardDevice::sync_() {
   JsonDocument doc;
-  doc["model"]="e1002"; doc["version"]="0.2.0"; doc["install_id"]=install_id_;
+  doc["model"]="e1002"; doc["version"]="0.3.0"; doc["install_id"]=install_id_;
   doc["boot_id"]=std::to_string(boot_id_); doc["downloaded"]=downloaded_;
   if (battery_->has_state() && std::isfinite(battery_->state)) doc["battery"]=battery_->state;
   if (temperature_->has_state() && std::isfinite(temperature_->state)) doc["temperature"]=temperature_->state;

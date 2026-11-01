@@ -10,12 +10,27 @@ Seiten und eine Vorschau des tatsächlich gerenderten Displaybilds. Den Anfang
 machen die Seeed reTerminal E1001 bis E1004; weitere Hersteller können später
 über eigene Geräteprofile ergänzt werden.
 
-## Version 0.2.0 – Logo und E1002-USB-Installer
+## Version 0.3.0 – Einheitliche Oberfläche für Desktop und Smartphone
 
 Die Integration und der E1002-Installer sind implementiert. Vor dem Einsatz am eigenen Gerät bitte
 die unten genannten Grenzen beachten. Es gibt noch keinen Hardwaretest mit
 PaperBoard. Die persönliche Vorgängerintegration `eink_calendar` wird nicht
 überschrieben oder automatisch umgestellt.
+
+### Neu in 0.3.0
+
+- Ruhiges Petrol-Design mit türkisen Auswahlmarkierungen und goldenen Hauptaktionen.
+- Einheitliche Karten, Formulare und Statusmeldungen in Editor, Datenquellen,
+  Gerätebereich und eigenständigem USB-Installer.
+- Kompakte Smartphone-Navigation und gut bedienbare Ansichten auch bei großer Schrift.
+- Verbesserte Tastaturbedienung, Dialogfokus und Rückkehr zur auslösenden Aktion.
+- Eingaben bleiben bei Validierungs- und Speicherfehlern erhalten.
+- Unverändertes Logo; der eigenständige Installer bringt es lokal eingebettet mit.
+
+**Aktualisierung:** PaperBoard über HACS oder das vollständige Installations-ZIP
+aktualisieren, Home Assistant neu starten und die PaperBoard-Seite im Browser
+neu laden. Ein bestehendes Display muss für die neue Gestaltung **nicht neu
+geflasht** werden. Layouts und Gerätezugänge bleiben erhalten.
 
 ### Bereits umgesetzt
 

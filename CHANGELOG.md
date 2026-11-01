@@ -1,9 +1,25 @@
 # Änderungen
 
-## Nächstes Update – vorgemerkt
+## 0.3.0 – 01.11.2026
 
-- Angenommenes PaperBoard-Logo in die Integration und GitHub-Darstellung aufnehmen.
-- Passende Symbolgrößen aus der bestätigten Logoquelle erstellen und auf Lesbarkeit prüfen.
+- Gemeinsames Petrol-Design mit zentralen Gestaltungswerten, türkisfarbenen
+  Auswahl- und Fokusmarkierungen sowie goldenen Hauptaktionen.
+- Einheitliche Gestaltung von Editor, Datenquellen, Gerätebereich und USB-/Offline-Installer.
+- Kompakte mobile Navigation, logische Kartenreihenfolge und verbesserte Darstellung
+  langer Inhalte sowie vergrößerter Schrift.
+- Tastaturfokus im Installer, Escape zum Schließen und Fokus-Rückkehr zur auslösenden Aktion.
+- Erhalt von Eingaben bei Formular- und Speicherfehlern; verständliche Lade- und Fehlerzustände.
+- Unverändertes Logo im Offline-Installer ohne externen Bildabruf eingebettet.
+- Versionsgleiche E1002-Firmware für ausdrücklich gewählte Neuinstallationen.
+- Das Designupdate erfordert kein Flashen bestehender Displays.
+
+## 0.2.0 – 01.11.2026
+
+- Angenommenes PaperBoard-Logo in Oberfläche und Projektseite integriert.
+- Geführter E1002-USB-Installer mit fertig kompilierter Firmware und individuellen API-/OTA-Zugängen.
+- Eigenständige Installerdatei für lokale HTTP-Installationen.
+- Gerätemeldungen, Sensorwerte und automatischer Abgleich von Seitenzahl,
+  Ausrichtung und Abrufabstand.
 
 ## 0.1.0 – 01.11.2026
 

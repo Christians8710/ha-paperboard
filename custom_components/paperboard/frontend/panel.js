@@ -1,5 +1,7 @@
 import {newWidget, clampWidget, scaleLayout, clone, uid} from './editor.js';
 import './installer-ui.js';
+import {themeCSS,footerHTML} from './theme.js';
+import {panelCSS} from './panel-style.js';
 
 const TYPES = {text:'Text', datetime:'Datum und Uhrzeit', sensor:'Sensorwert', weather:'Wetter', calendar:'Kalender', waste:'Abfalltermine', holiday:'Feiertage', status:'Gerätestatus', rectangle:'Rahmen', line:'Linie'};
 const COLORS = {black:'Schwarz',white:'Weiß',red:'Rot',yellow:'Gelb',blue:'Blau',green:'Grün'};
@@ -10,7 +12,7 @@ class PaperBoardPanel extends HTMLElement {
   constructor() {
     super(); this.attachShadow({mode:'open'}); this.displays=[]; this.doc=null; this.page=0;
     this.selected=null; this.tab='editor'; this.dirty=false; this.undo=[]; this.redo=[];
-    this.snap=true; this.autoPreview=true; this.preview=''; this.notice=''; this.busy=false;
+    this.loading=true;this.loadError='';this.snap=true; this.autoPreview=true; this.preview=''; this.notice=''; this.busy=false;
   }
   set hass(value) { this._hass=value; if (!this.started && this.isConnected) {this.started=true; this.loadList();} }
   get hass() {return this._hass;}
@@ -18,10 +20,11 @@ class PaperBoardPanel extends HTMLElement {
   disconnectedCallback(){clearTimeout(this.previewTimer); this.previewSerial=(this.previewSerial||0)+1;}
   async call(action, data={}) {return this.hass.callWS({type:'paperboard/command',action,...data});}
   async loadList() {
+    this.loading=true;this.loadError='';this.render();
     try {
-      const result=await this.call('list'); this.displays=result.displays;this.version=result.version;this.models=result.models;
+      const result=await this.call('list'); this.loading=false;this.displays=result.displays;this.version=result.version;this.models=result.models;
       if(this.displays.length) await this.load(this.displays[0].id); else this.render();
-    } catch(e){this.message(e.message||'PaperBoard konnte nicht geladen werden.','error');}
+    } catch(e){this.loading=false;this.loadError=e.message||'PaperBoard konnte nicht geladen werden.';this.render();}
   }
   async load(id) {
     if(this.busy)return;
@@ -36,25 +39,28 @@ class PaperBoardPanel extends HTMLElement {
   get currentPage(){return this.doc?.pages[this.page];}
   get currentWidget(){return this.currentPage?.widgets.find(w=>w.id===this.selected);}
   checkpoint(){this.undo.push(clone(this.doc));if(this.undo.length>40)this.undo.shift();this.redo=[];}
-  changed(){this.previewSerial=(this.previewSerial||0)+1;this.dirty=true;this.preview='';this.render();this.schedulePreview();}
+  changed(){this.previewSerial=(this.previewSerial||0)+1;this.dirty=true;this.preview='';if(this.noticeKind==='success')this.notice='';this.render();this.schedulePreview();}
   fieldChanged(el){
     if(this.editingField!==el){this.checkpoint();this.editingField=el;}
     this.previewSerial=(this.previewSerial||0)+1;this.dirty=true;this.preview='';
-    const save=this.shadowRoot.querySelector('#save');if(save)save.textContent='Änderungen speichern';
+    const save=this.shadowRoot.querySelector('#save');if(save){save.textContent='Änderungen speichern';save.classList.add('primary');}
+    if(this.noticeKind==='success'){this.notice='';this.shadowRoot.querySelector('.notice')?.remove();}
     const stage=this.shadowRoot.querySelector('#stage');if(stage)stage.innerHTML=this.currentPage.widgets.map(b=>this.widgetHTML(b)).join('');
     this.schedulePreview();
   }
   schedulePreview(){clearTimeout(this.previewTimer);if(this.autoPreview && this.doc)this.previewTimer=setTimeout(()=>this.showPreview(),600);}
   async showPreview(){
     const serial=this.previewSerial=(this.previewSerial||0)+1;
+    const pending=this.shadowRoot.querySelector('#previewHint');if(pending){pending.textContent='Vorschau wird aktualisiert …';pending.className='';pending.setAttribute('role','status');}
+    this.shadowRoot.querySelector('#previewImage')?.setAttribute('aria-busy','true');
     try {
       const result=await this.call('preview',{entry_id:this.current.id,layout:clone(this.doc),page:this.page});
       if(serial!==this.previewSerial)return;
       this.preview=`data:image/png;base64,${result.image}`;
       this.previewWarnings=result.warnings||[];
-      const img=this.shadowRoot.querySelector('#previewImage');if(img){img.src=this.preview;img.hidden=false;}
-      const hint=this.shadowRoot.querySelector('#previewHint');if(hint)hint.textContent=this.previewWarnings.join(' · ')||'Originalbild in der Geräteauflösung. Farbreduktion ist bereits angewendet.';
-    }catch(e){if(serial===this.previewSerial){const hint=this.shadowRoot.querySelector('#previewHint');if(hint)hint.textContent=e.message||'Vorschau fehlgeschlagen.';}}
+      const img=this.shadowRoot.querySelector('#previewImage');if(img){img.src=this.preview;img.hidden=false;img.removeAttribute('aria-busy');}
+      const hint=this.shadowRoot.querySelector('#previewHint');if(hint){hint.textContent=this.previewWarnings.join(' · ')||'Originalbild in der Geräteauflösung. Farbreduktion ist bereits angewendet.';hint.className=this.previewWarnings.length?'note warning':'';}
+    }catch(e){if(serial===this.previewSerial){const hint=this.shadowRoot.querySelector('#previewHint');if(hint){hint.textContent=e.message||'Vorschau fehlgeschlagen.';hint.className='note error';hint.setAttribute('role','alert');}const img=this.shadowRoot.querySelector('#previewImage');if(img){img.hidden=true;img.removeAttribute('aria-busy');}}}
   }
   async save(){
     if(this.busy)return;this.busy=true;this.render();
@@ -62,7 +68,7 @@ class PaperBoardPanel extends HTMLElement {
       const result=await this.call('save',{entry_id:this.current.id,layout:clone(this.doc),revision:this.current.revision});
       this.current=result;this.doc=result.layout;this.dirty=false;this.notice='Gespeichert. Das Display erhält die Seiten bei seinem nächsten Bildabruf.';this.noticeKind='success';
     }catch(e){this.notice=e.message||'Speichern fehlgeschlagen.';this.noticeKind='error';}
-    finally{this.busy=false;this.render();}
+    finally{this.busy=false;this.render();this.shadowRoot.querySelector('#save')?.focus({preventScroll:true});}
   }
   entityList(domain){return Object.keys(this.hass?.states||{}).filter(e=>!domain||e.startsWith(domain+'.')).sort();}
   entityInput(key,value='',domain='',extra=''){
@@ -71,38 +77,48 @@ class PaperBoardPanel extends HTMLElement {
   }
   render(){
     const root=this.shadowRoot; if(!root)return;
+    const active=root.activeElement;
+    const focusKey=['id','data-action','data-tab','data-page','data-select','data-widget'].find(key=>active?.hasAttribute(key));
+    const focusValue=focusKey?active.getAttribute(focusKey):null;
+    const editingNewWidget=active?.hasAttribute('data-add');
+    const openDetails=new Set([...root.querySelectorAll('details[open]')].map(d=>d.querySelector('summary')?.textContent.split('·')[0].trim()));
     const w=this.currentWidget;
-    root.innerHTML=`<style>${this.css()}</style>
-      <header><div class="brand"><img src="/paperboard_static/paperboard-logo.png" alt="PaperBoard" width="210" height="75"><small>Deine Inhalte. Dein Display.</small></div>
-        <div class="headerActions"><span class="version">${esc(this.version||'0.2.0')} · Hardwaretest ausstehend</span>
-        ${this.doc?`<button id="save" class="primary" ${this.busy?'disabled':''}>${this.busy?'Speichert …':this.dirty?'Änderungen speichern':'Gespeichert'}</button>`:''}</div></header>
-      ${this.notice?`<div role="status" class="notice ${esc(this.noticeKind)}">${esc(this.notice)}<button id="dismiss" aria-label="Meldung schließen">×</button></div>`:''}
-      ${!this.displays.length?`<main class="empty"><h1>Dein erstes PaperBoard</h1><p>Füge unter Einstellungen → Geräte & Dienste ein PaperBoard-Display hinzu.</p><a href="/config/integrations/dashboard/add?domain=paperboard">Display einrichten →</a></main>`:`
-      <nav><label class="deviceSelect">Display <select id="display">${this.displays.map(d=>`<option value="${esc(d.id)}" ${this.current?.id===d.id?'selected':''}>${esc(d.settings.name)}</option>`).join('')}</select></label>
-        ${[['editor','Seiteneditor'],['sources','Datenquellen'],['device','Gerät & Verbindung']].map(([v,l])=>`<button data-tab="${v}" class="${this.tab===v?'active':''}">${l}</button>`).join('')}
-        <a class="newDevice" href="/config/integrations/dashboard/add?domain=paperboard">+ Display</a></nav>
+    root.innerHTML=`<style>${this.css()}</style><div class="shell">
+      <header class="appHeader"><div class="brand"><div class="logoFrame"><img src="/paperboard_static/paperboard-logo.png" alt="PaperBoard" width="174" height="62"></div><div><strong>Deine Inhalte. Dein Display.</strong><small>E-Paper-Dashboards für Home Assistant</small></div></div>
+        <div class="headerActions"><span class="version">Version ${esc(this.version||'0.3.0')}</span>
+        ${this.doc?`<button id="save" class="${this.dirty?'primary':''}" ${this.busy?'disabled':''}>${this.busy?'Speichert …':this.dirty?'Änderungen speichern':'✓ Gespeichert'}</button>`:''}</div></header>
+      ${this.notice?`<div role="${this.noticeKind==='error'?'alert':'status'}" class="notice ${esc(this.noticeKind)}"><span>${this.noticeKind==='error'?'Hinweis: ':''}${esc(this.notice)}</span><button id="dismiss" aria-label="Meldung schließen">×</button></div>`:''}
+      ${this.loading?'<main class="loadState" role="status"><h1>PaperBoard wird geladen</h1><p><span class="loadingDot" aria-hidden="true"></span>Displays und Seiten werden abgerufen …</p></main>':this.loadError?`<main class="loadState error" role="alert"><h1>Verbindung fehlgeschlagen</h1><p>${esc(this.loadError)}</p><button id="retryLoad" class="primary">Erneut laden</button></main>`:!this.displays.length?`<main class="empty"><h1>Dein erstes PaperBoard</h1><p>Verbinde ein Display und gestalte deine eigenen Seiten.</p><a class="button primary" href="/config/integrations/dashboard/add?domain=paperboard">Display einrichten</a></main>`:`
+      <nav aria-label="PaperBoard-Bereiche"><label class="deviceSelect"><span class="labelText">Display auswählen</span><select id="display">${this.displays.map(d=>`<option value="${esc(d.id)}" ${this.current?.id===d.id?'selected':''}>${esc(d.settings.name)}</option>`).join('')}</select></label>
+        ${[['editor','Seiteneditor'],['sources','Datenquellen'],['device','Gerät & Verbindung']].map(([v,l])=>`<button data-tab="${v}" ${this.tab===v?'aria-current="page"':''} class="${this.tab===v?'active':''}">${l}</button>`).join('')}
+        <a class="newDevice" href="/config/integrations/dashboard/add?domain=paperboard" aria-label="Weiteres Display hinzufügen">+ Display</a></nav>
       ${this.doc?this.tab==='editor'?this.editorHTML(w):this.tab==='sources'?this.sourcesHTML():this.deviceHTML():''}`}
+      ${footerHTML}</div>
       ${['','calendar','sensor','weather'].map(domain=>`<datalist id="entities-${domain||'all'}">${this.entityList(domain).map(e=>`<option value="${esc(e)}">${esc(this.hass.states[e]?.attributes?.friendly_name||e)}</option>`).join('')}</datalist>`).join('')}`;
     this.bind();
+    root.querySelectorAll('details').forEach(d=>{if(openDetails.has(d.querySelector('summary')?.textContent.split('·')[0].trim()))d.open=true;});
+    const focusTarget=editingNewWidget?root.querySelector('.inspector input'):focusKey?root.querySelector(`[${focusKey}="${CSS.escape(focusValue)}"]`):null;
+    focusTarget?.focus({preventScroll:!editingNewWidget});
   }
   editorHTML(w){
-    return `<div class="workspace"><aside class="pages"><div class="asideTitle">SEITEN <span>${this.doc.pages.length}/12</span></div>
-      ${this.doc.pages.map((p,i)=>`<button data-page="${i}" class="page ${i===this.page?'chosen':''}"><span>${String(i+1).padStart(2,'0')}</span>${esc(p.name)}</button>`).join('')}
-      <button id="addPage" class="dashed" ${this.doc.pages.length>=12?'disabled':''}>+ Neue Seite</button>
-      <div class="asideTitle">BAUSTEINE</div><div class="widgets">${Object.entries(TYPES).map(([k,l])=>`<button data-add="${k}">+ ${l}</button>`).join('')}</div>
-      <div class="asideTitle">EBENEN <small>oben = vorne</small></div>
+    return `<div class="workspace"><aside class="pages" aria-label="Seiten und Bausteine"><div class="asideTitle">SEITEN <span>${this.doc.pages.length}/12</span></div><div class="pageList">
+      ${this.doc.pages.map((p,i)=>`<button data-page="${i}" ${i===this.page?'aria-current="true"':''} class="page ${i===this.page?'chosen':''}"><span>${String(i+1).padStart(2,'0')}</span>${esc(p.name)}</button>`).join('')}
+      <button id="addPage" class="dashed" ${this.doc.pages.length>=12?'disabled':''}>+ Neue Seite</button></div>
+      <div class="palette"><details><summary>Baustein hinzufügen</summary><div class="widgets">${Object.entries(TYPES).map(([k,l])=>`<button data-add="${k}">+ ${l}</button>`).join('')}</div></details>
+      <details><summary>Ebenen · ${this.currentPage.widgets.length} Bausteine</summary><p class="small">Oben liegende Bausteine stehen zuerst.</p><div class="layers">
       ${[...this.currentPage.widgets].reverse().map(b=>`<button class="layer ${b.id===this.selected?'chosen':''}" data-select="${esc(b.id)}">${esc(b.title||b.text||TYPES[b.type])}</button>`).join('')}
-      </aside><main class="editor"><div class="toolbar"><input id="pageName" aria-label="Seitenname" value="${esc(this.currentPage.name)}">
-        <button data-action="pageUp" title="Seite nach vorne">←</button><button data-action="pageDown" title="Seite nach hinten">→</button>
+      </div></details></div>
+      </aside><main class="editor"><div class="toolbar"><label>Seitenname<input id="pageName" value="${esc(this.currentPage.name)}"></label>
+        <button data-action="pageUp" title="Seite nach vorne" aria-label="Seite nach vorne">←</button><button data-action="pageDown" title="Seite nach hinten" aria-label="Seite nach hinten">→</button>
         <button data-action="copyPage">Seite kopieren</button><button data-action="deletePage" ${this.doc.pages.length<2?'disabled':''}>Seite löschen</button></div>
       <div class="tools"><button data-action="undo" ${!this.undo.length?'disabled':''}>↶ Zurück</button><button data-action="redo" ${!this.redo.length?'disabled':''}>↷ Vor</button>
         <label><input id="snap" type="checkbox" ${this.snap?'checked':''}> Raster 8 px</label><label><input id="autoPreview" type="checkbox" ${this.autoPreview?'checked':''}> Automatische Vorschau</label>
         <button id="preview">Vorschau aktualisieren</button></div>
-      <div class="stageWrap"><div id="stage" class="stage ${this.snap?'grid':''}" style="aspect-ratio:${this.doc.width}/${this.doc.height}">
+      <div class="stageWrap"><div id="stage" aria-label="Bearbeitbare Displayseite" class="stage ${this.snap?'grid':''}" style="aspect-ratio:${this.doc.width}/${this.doc.height}">
         ${this.currentPage.widgets.map(b=>this.widgetHTML(b)).join('')}</div></div>
       <div class="canvasMeta">${this.doc.width} × ${this.doc.height} Zeichenfläche → ${this.current.size.join(' × ')} Displaypixel · ${this.currentPage.widgets.length}/40 Bausteine</div>
       <section class="preview"><div class="previewHeading"><h3>Displayvorschau</h3><span>So wird die Seite gerendert</span></div>
-        <img id="previewImage" alt="Gerenderte Vorschau der aktuellen Seite" ${this.preview?`src="${this.preview}"`:'hidden'}><p id="previewHint">${this.preview?esc((this.previewWarnings||[]).join(' · '))||'Originalbild in der Geräteauflösung.':'Vorschau wird erzeugt …'}</p></section>
+        <img id="previewImage" alt="Gerenderte Vorschau der aktuellen Seite" ${this.preview?`src="${this.preview}"`:'hidden'}><p id="previewHint" role="status">${this.preview?esc((this.previewWarnings||[]).join(' · '))||'Originalbild in der Geräteauflösung.':'Vorschau wird erzeugt …'}</p></section>
       </main><aside class="inspector"><div class="asideTitle">${w?'BAUSTEIN BEARBEITEN':'ZEICHENFLÄCHE'}</div>
         ${w?this.inspectorHTML(w):`<h3>Deine Seite gestalten</h3><p>Wähle links einen Baustein und ziehe ihn an die gewünschte Stelle. Am unteren rechten Griff änderst du seine Größe.</p>
           <label>Breite<input id="canvasWidth" type="number" min="240" max="2000" value="${this.doc.width}"></label>
@@ -134,32 +150,33 @@ class PaperBoardPanel extends HTMLElement {
   }
   sourcesHTML(){
     const b=this.doc.bindings;
-    return `<main class="settings"><h1>Datenquellen</h1><p>Diese Quellen gelten für die Seiten dieses Displays. Änderungen werden mit „Änderungen speichern“ übernommen.</p>
-      <section><h2>Kalender</h2><p>Jeder Kalender erhält eine Bezeichnung und Farbe. „Titel verbergen“ zeigt nur „Termin“ an.</p>
-      ${b.calendars.map((c,i)=>`<div class="calendarSource"><label>Kalender<input data-cal="${i}" data-key="entity" list="entities-calendar" value="${esc(c.entity)}"></label><label>Bezeichnung<input data-cal="${i}" data-key="label" maxlength="60" value="${esc(c.label)}"></label><label>Farbe<select data-cal="${i}" data-key="color">${options(COLORS,c.color)}</select></label><label class="check"><input type="checkbox" data-cal="${i}" data-key="private_titles" ${c.private_titles?'checked':''}> Titel verbergen</label><button data-remove-cal="${i}">Entfernen</button></div>`).join('')}
+    return `<main class="settings"><h1>Datenquellen</h1><p>Wähle die Quellen für dieses Display. Speichere anschließend deine Änderungen.</p>
+      <section><h2>Kalender</h2><p>Bezeichnung und Farbe helfen beim Zuordnen. Mit „Titel verbergen“ erscheint nur „Termin“.</p>
+      ${b.calendars.length?'':'<p class="note">Noch kein Kalender ausgewählt. Füge deinen ersten Kalender hinzu.</p>'}
+      ${b.calendars.map((c,i)=>`<div class="calendarSource"><label>Kalender<input data-cal="${i}" data-key="entity" list="entities-calendar" value="${esc(c.entity)}"></label><label>Bezeichnung<input data-cal="${i}" data-key="label" maxlength="60" value="${esc(c.label)}"></label><label>Farbe<select data-cal="${i}" data-key="color">${options(COLORS,c.color)}</select></label><label class="check"><input type="checkbox" data-cal="${i}" data-key="private_titles" ${c.private_titles?'checked':''}> Titel verbergen</label><button data-remove-cal="${i}" aria-label="Kalender ${i+1} entfernen">Entfernen</button></div>`).join('')}
       <button id="addCalendar" ${b.calendars.length>=12?'disabled':''}>+ Kalender hinzufügen</button></section>
-      <section><h2>Zusatzkalender</h2><p>Feiertage und Abfalltermine werden bis zu 90 Tage voraus abgefragt.</p>
-      <label>Abfallkalender${this.entityInput('waste_calendar',b.waste_calendar,'calendar')}</label>
-      <label>Feiertagskalender${this.entityInput('holiday_calendar',b.holiday_calendar,'calendar')}</label></section>
-      <section><h2>Gerätestatus</h2><label>Akku${this.entityInput('battery_entity',b.battery_entity)}</label><label>Temperatur${this.entityInput('temperature_entity',b.temperature_entity)}</label><label>Luftfeuchtigkeit${this.entityInput('humidity_entity',b.humidity_entity)}</label></section>
-      <p>Die beiden Kalender aus deinem bisherigen Projekt kannst du hier auswählen. Es werden keine persönlichen Entitäten vorgegeben.</p></main>`;
+      <section><h2>Abfall und Feiertage</h2><p>Zusatztermine werden bis zu 90 Tage im Voraus berücksichtigt.</p>
+      <div class="bindingGrid"><label>Abfallkalender${this.entityInput('waste_calendar',b.waste_calendar,'calendar')}</label>
+      <label>Feiertagskalender${this.entityInput('holiday_calendar',b.holiday_calendar,'calendar')}</label></div></section>
+      <details><summary>Eigene Statussensoren auswählen</summary><p>Optional: Verwende eigene Sensoren für Akku, Temperatur und Luftfeuchtigkeit. Ohne Auswahl nutzt die Installer-Firmware ihre gemeldeten Gerätemesswerte.</p><div class="bindingGrid"><label>Akku${this.entityInput('battery_entity',b.battery_entity)}</label><label>Temperatur${this.entityInput('temperature_entity',b.temperature_entity)}</label><label>Luftfeuchtigkeit${this.entityInput('humidity_entity',b.humidity_entity)}</label></div></details></main>`;
   }
   deviceHTML(){
-    const s=this.current.settings;
-    return `<main class="settings"><h1>${esc(s.name)}</h1><section><h2>${esc(this.models[s.model].name)}</h2><p>${this.current.size.join(' × ')} Pixel · ${s.power==='battery'?'Akkubetrieb':'Netzbetrieb'} · Gewünschter Abruf alle ${s.refresh_interval} Sekunden</p>
-      <p>Diese Betriebsart ist eine Vorgabe für die Gerätefirmware. Sie schaltet ein vorhandenes Gerät nicht automatisch in den Tiefschlaf.</p><p>Hardwarefreigabe für PaperBoard steht noch aus. E1002 ist das erste vorgesehene Testgerät; E1001, E1003 und E1004 sind experimentelle Ausgabeprofile.</p>
-      <a href="/config/integrations/integration/paperboard">Geräteeinstellungen öffnen →</a></section>
-      <section><h2>Display verbinden</h2><p>Der geschützte Bildendpunkt liefert die gerenderten Seiten. Zeige die Verbindungsdaten an und übernimm sie bewusst in deine vorhandene ESPHome-Konfiguration. WLAN, API, OTA und IP werden hier nicht verändert.</p>
-      <button id="connection">Verbindungsdaten anzeigen</button><div id="connectionDetails"></div></section>
-      <section><h2>Neues E1002 über USB einrichten</h2>${s.model==='e1002'?`<p>Die fertig kompilierte Firmware wird automatisch zusammen mit deinen persönlichen Geräteeinstellungen geschrieben und geprüft. Seitenanzahl und Abrufabstand werden danach von PaperBoard übernommen. WLAN, API, OTA und IP einer bestehenden Installation bleiben unberührt, solange du keine ausdrücklich bestätigte Neuinstallation startest.</p><button id="openInstaller" class="primary" ${this.current.installer_available?'':'disabled'}>E1002-USB-Installer öffnen</button>${!this.current.installer_available?'<p>Geprüftes Firmwarepaket fehlt. Bitte das vollständige PaperBoard-Update installieren und Home Assistant neu starten.</p>':''}`:'<p>Der automatische Installer unterstützt in dieser Version ausschließlich das E1002. Auf diesem Modell keine E1002-Firmware installieren.</p>'}</section>
-      <section><h2>Firmware und Verbindung</h2><p>Gemeldete Firmware: ${esc(this.current.device_status?.version||'Noch keine Meldung')}</p><p>Letzte Gerätemeldung: ${esc(this.current.device_status?.last_seen||'Noch keine Meldung')}</p><p>Erster Bilddownload: ${this.current.device_status?.downloaded?'Vom Gerät bestätigt':'Noch nicht bestätigt'}</p><p>Geräteadresse: ${esc(this.current.device_status?.address||'Noch nicht bekannt')}</p></section>
-      <section><h2>Geräteabruf</h2><p>Letzter Abruf: ${esc(this.current.last_request||'Noch kein Bild abgerufen')}</p><p>Letzte Bilderzeugung: ${esc(this.current.last_render||'Noch keine')}</p><button id="refreshStatus">Status neu laden</button></section></main>`;
+    const s=this.current.settings,status=this.current.device_status||{};
+    const row=(label,value)=>`<div><dt>${label}</dt><dd>${esc(value)}</dd></div>`;
+    return `<main class="settings"><h1>${esc(s.name)}</h1><p>${esc(this.models[s.model].name)} · ${this.current.size.join(' × ')} Pixel · ${s.power==='battery'?'Akkubetrieb':'Netzbetrieb'}</p>
+      <div class="settingsGrid"><section class="deviceSetup"><h2>Display einrichten</h2>${s.model==='e1002'?`<p>Verbinde dein E1002 per USB und übertrage Firmware und persönliche Geräteeinstellungen.</p><button id="openInstaller" class="primary" ${this.current.installer_available?'':'disabled'}>E1002-USB-Installer öffnen</button>${!this.current.installer_available?'<p class="note error" role="alert">Firmwarepaket fehlt. Installiere das vollständige PaperBoard-Update und starte Home Assistant neu.</p>':''}<p class="small">Erst nach deiner Bestätigung wird eine Neuinstallation gestartet. Dabei werden vorhandene Geräteeinstellungen ersetzt.</p>`:'<p class="note warning">Für dieses Modell ist noch kein USB-Installer freigegeben. Verwende hier keine E1002-Firmware.</p>'}</section>
+      <section class="deviceStatus"><h2>Verbindungsstatus</h2><p class="note">${status.downloaded?'✓ Bilddownload vom Gerät bestätigt.':status.last_seen?'Gerät verbunden. Der erste Bilddownload ist noch nicht bestätigt.':'Noch keine Gerätemeldung. Richte dein Display ein oder prüfe seine Verbindung.'}</p>
+      <dl class="statusList">${row('Firmware',status.version||'Noch keine Meldung')}${row('Letzte Gerätemeldung',status.last_seen||'Noch keine Meldung')}${row('Geräteadresse',status.address||'Noch nicht bekannt')}${row('Letzter Bildabruf',this.current.last_request||'Noch kein Bild abgerufen')}${row('Letzte Bilderzeugung',this.current.last_render||'Noch keine')}${row('Seiten',this.doc.pages.length)}</dl><button id="refreshStatus">Status neu laden</button></section>
+      <section class="deviceSettings"><h2>Geräteeinstellungen</h2><p>Abruf alle ${s.refresh_interval} Sekunden. Die Installer-Firmware übernimmt Änderungen an Seitenanzahl, Ausrichtung und Abrufabstand beim nächsten Kontakt.</p><a class="button" href="/config/integrations/integration/paperboard">Geräteeinstellungen öffnen</a>
+      <details class="helpDetails"><summary>Hinweise zu Modell und Akkubetrieb</summary><p>Das Akkuprofil aktiviert noch keinen automatischen Tiefschlaf. Die Firmware bleibt erreichbar.</p><p>Der Hardwaretest am E1002 steht noch aus. E1001, E1003 und E1004 sind experimentelle Ausgabeprofile ohne freigegebene Gerätefirmware.</p></details></section>
+      <section class="deviceConnection"><h2>Weitere Verbindungsmöglichkeiten</h2><details><summary>Vorhandene ESPHome-Firmware verbinden</summary><p>Übernimm den Bildpfad und den Display-Schlüssel bewusst in deine vorhandene Konfiguration. WLAN, API, OTA und IP werden hier nicht verändert.</p><button id="connection">Verbindungsdaten anzeigen</button><div id="connectionDetails"></div></details></section>
+</div></main>`;
   }
   bind(){
     const root=this.shadowRoot;
     if(this.busy)root.querySelectorAll('input,select,textarea,button').forEach(el=>el.disabled=true);
     const on=(selector,event,fn)=>root.querySelectorAll(selector).forEach(el=>el.addEventListener(event,fn));
-    on('#save','click',()=>this.save());on('#dismiss','click',()=>{this.notice='';this.render();});
+    on('#retryLoad','click',()=>this.loadList());on('#save','click',()=>this.save());on('#dismiss','click',()=>{this.notice='';this.render();});
     on('#display','change',e=>this.load(e.target.value));
     on('[data-tab]','click',e=>{this.tab=e.currentTarget.dataset.tab;this.render();});
     on('[data-page]','click',e=>{this.page=+e.currentTarget.dataset.page;this.selected=null;this.preview='';this.render();this.schedulePreview();});
@@ -184,7 +201,7 @@ class PaperBoardPanel extends HTMLElement {
     on('#connection','click',()=>this.connection());on('#refreshStatus','click',async()=>{try{const data=await this.call('get',{entry_id:this.current.id});this.current={...this.current,last_request:data.last_request,last_render:data.last_render,device_status:data.device_status,installer_available:data.installer_available};this.render();}catch(e){this.message(e.message,'error');}});
     on('#openInstaller','click',()=>this.openInstaller());
     on('#stage','pointerdown',e=>this.dragStart(e));
-    on('[data-widget]','keydown',e=>{if(e.key==='Enter'){this.selected=e.currentTarget.dataset.widget;this.render();}});
+    on('[data-widget]','keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.selected=e.currentTarget.dataset.widget;this.render();}});
   }
   dragStart(e){
     const node=e.target.closest('[data-widget]');
@@ -226,7 +243,11 @@ class PaperBoardPanel extends HTMLElement {
       if(action==='pageDown'&&this.page<this.doc.pages.length-1){[this.doc.pages[this.page+1],this.doc.pages[this.page]]=[p,this.doc.pages[this.page+1]];this.page++;}
       if(action==='resizeCanvas'){
         const width=Number(this.shadowRoot.querySelector('#canvasWidth').value),height=Number(this.shadowRoot.querySelector('#canvasHeight').value);
-        if(!Number.isInteger(width)||!Number.isInteger(height)||width<240||height<240||width>2000||height>2000){this.undo.pop();return this.message('Breite und Höhe müssen zwischen 240 und 2000 liegen.','error');}
+        if(!Number.isInteger(width)||!Number.isInteger(height)||width<240||height<240||width>2000||height>2000){
+          this.undo.pop();this.message('Breite und Höhe müssen zwischen 240 und 2000 liegen.','error');
+          const wi=this.shadowRoot.querySelector('#canvasWidth'),hi=this.shadowRoot.querySelector('#canvasHeight');wi.value=width;hi.value=height;
+          const invalid=(!Number.isInteger(width)||width<240||width>2000)?wi:hi;invalid.setAttribute('aria-invalid','true');invalid.focus();return;
+        }
         scaleLayout(this.doc,width,height);
       }
     }
@@ -244,11 +265,10 @@ class PaperBoardPanel extends HTMLElement {
     this.shadowRoot.querySelectorAll('input,select,textarea,button').forEach(el=>el.disabled=true);
     const installer=document.createElement('paperboard-installer');
     installer.context={hass:this.hass,entry_id:this.current.id,defaultBaseUrl:location.origin,previewOnly:this.hass.paperboardPreviewOnly===true};
-    installer.addEventListener('installer-close',()=>{this.busy=false;this.render();this.call('get',{entry_id:this.current.id}).then(info=>{this.current=info;this.render();}).catch(()=>{});});
+    this.shadowRoot.querySelector('.shell').inert=true;
+    installer.addEventListener('installer-close',()=>{this.busy=false;this.render();this.shadowRoot.querySelector('#openInstaller')?.focus();this.call('get',{entry_id:this.current.id}).then(info=>{this.current=info;this.render();}).catch(()=>{});});
     this.shadowRoot.append(installer);
   }
-  css(){return `
-    :host{display:block;height:100%;overflow:auto;color:#1f332c;background:#f4f5ef;font-family:var(--paper-font-body1_-_font-family,system-ui,sans-serif);font-size:14px;--green:#245d48;--muted:#6b7870}*{box-sizing:border-box}button,input,select,textarea{font:inherit}button,a,input,select,textarea{outline-offset:3px}button{cursor:pointer;border:1px solid #d6ddd3;border-radius:7px;background:#fff;color:#284237;padding:9px 12px}button:hover{border-color:#759884;background:#f0f6ef}button:disabled{opacity:.5;cursor:default}button.primary{background:var(--green);color:white;border-color:var(--green);font-weight:650}header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:1px solid #d9dfd4;background:#fcfdf9;gap:16px}.brand{display:flex;gap:12px;align-items:center}.mark{background:#dfe9cb;border-radius:10px;font:bold 29px Georgia;padding:7px 14px;color:#25513c}.brand strong{font-size:23px;letter-spacing:-.7px}.brand small{display:block;color:var(--muted);font-size:12px;margin-top:3px}.headerActions{display:flex;gap:20px;align-items:center}.version{font-size:11px;color:var(--muted)}nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fcfdf9;padding:12px 28px;border-bottom:1px solid #d9dfd4}nav button{border:0;background:transparent}nav button.active{background:#e1ead9;color:#204f3b;font-weight:650}.deviceSelect{display:flex;align-items:center;gap:10px;margin-right:18px}.deviceSelect select{width:190px}.newDevice{margin-left:auto}a{color:var(--green);text-decoration:none}a:hover{text-decoration:underline}.workspace{display:grid;grid-template-columns:205px minmax(380px,1fr) 250px;min-height:calc(100vh - 153px)}aside{padding:20px 14px;background:#fbfcf8}.pages{border-right:1px solid #d9dfd4}.inspector{border-left:1px solid #d9dfd4}.asideTitle{font-size:10px;font-weight:750;letter-spacing:1.2px;color:#788373;margin:8px 0 14px;display:flex;justify-content:space-between}.asideTitle small{font-size:9px;letter-spacing:0}.page,.layer{width:100%;text-align:left;margin-bottom:5px;border-color:transparent;background:transparent;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.page{display:flex;gap:9px;align-items:center}.page span{font-size:10px;color:#7d8b79}.chosen{background:#e4ecd9!important;border-color:#c8d7ba!important}.dashed{border-style:dashed;width:100%;margin:6px 0 22px}.widgets{display:grid;grid-template-columns:1fr;gap:4px;margin-bottom:25px}.widgets button{text-align:left;font-size:12px;border-color:transparent;background:#f1f4eb}.editor{padding:20px 24px;min-width:0}.toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.toolbar input{flex:1;min-width:140px;font-weight:650;background:transparent;border-color:transparent;font-size:18px}.toolbar button,.tools button{font-size:11px;padding:6px 8px}.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 20px;color:var(--muted);font-size:11px}.tools label{display:flex;align-items:center;gap:4px}.stageWrap{padding:14px;background:#e6eadd;border-radius:9px}.stage{container-type:inline-size;width:100%;background:white;position:relative;box-shadow:0 2px 12px #203c2514;touch-action:none;overflow:hidden}.stage.grid{background-image:radial-gradient(#d9ded7 .6px,transparent .6px);background-size:8px 8px}.widget{position:absolute;background:var(--widget-bg);color:var(--widget-color);overflow:hidden;cursor:move;user-select:none;white-space:pre-wrap;line-height:1.3;border:1px solid transparent;touch-action:none}.widget span{display:block;padding:5px}.widget.calendar{font-size:1.6cqw!important;background:linear-gradient(white,#f9fbf5);border:1px solid #d6ded0}.widget.calendar span{line-height:2}.widget.line{background:var(--widget-color)}.widget.rectangle{border:2px solid var(--widget-color)}.widget:hover{outline:1px dashed #8ba78b}.widget.selected{outline:2px solid #608348;z-index:50}.resize{position:absolute;bottom:0;right:0;width:12px;height:12px;background:#608348;border:2px solid white;cursor:nwse-resize}.canvasMeta{font-size:10px;color:var(--muted);margin:10px 1px 24px}.preview{padding:16px;background:#fff;border:1px solid #dce1d6;border-radius:9px}.previewHeading{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.previewHeading h3{margin:0;font-size:13px}.previewHeading span{font-size:10px;color:var(--muted)}.preview img{max-width:100%;height:auto;border:1px solid #e1e5db;display:block}.preview img[hidden]{display:none}.preview p{font-size:11px;color:var(--muted);margin-bottom:0}h3{font-size:16px}p{color:var(--muted);line-height:1.65}input:not([type=checkbox]),select,textarea{width:100%;padding:8px;border:1px solid #d2dbce;border-radius:6px;background:white;color:#203b2c;min-width:0}label{display:block}.inspector label{font-size:11px;color:#66735f;margin-bottom:12px}.inspector input,.inspector select,.inspector textarea{margin-top:5px}.pairs{display:grid;grid-template-columns:1fr 1fr;gap:8px}.check{display:flex!important;gap:7px;align-items:center}.inspector .check input{margin:0}.inspector button{font-size:11px}.inspector p{font-size:11px}.inspector hr{border:0;border-top:1px solid #d9dfd4;margin:22px 0}.file{margin-top:12px}.file input{font-size:10px}.notice{padding:12px 28px;background:#e3edd9;color:#29432a;display:flex;justify-content:space-between;align-items:center}.notice.error{background:#fce8df;color:#8a3526}.notice button{padding:0 6px;background:transparent;border:0;font-size:22px}.settings{max-width:1050px;padding:28px 40px;margin:auto}.settings h1{font-size:27px;letter-spacing:-.6px}.settings section{background:#fcfdf9;border:1px solid #dae1d3;border-radius:10px;padding:22px;margin:20px 0}.settings h2{font-size:18px;margin:0 0 10px}.settings label{margin-bottom:12px;max-width:650px}.settings input,.settings select{margin-top:5px}.calendarSource{display:grid;grid-template-columns:2fr 1fr 110px 120px auto;gap:12px;align-items:center;border-bottom:1px solid #e0e5d9;margin-bottom:14px}.settings pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eaf0e3;padding:16px;border-radius:8px;font-size:12px}.empty{padding:60px;max-width:650px;margin:auto}button:focus-visible,a:focus-visible{outline:3px solid #87a567}@media(max-width:1150px){.workspace{grid-template-columns:170px minmax(300px,1fr)}.inspector{grid-column:1/-1;border-top:1px solid #d9dfd4;padding:20px 30px}.inspector .pairs{max-width:500px}.calendarSource{grid-template-columns:1fr 1fr}}@media(max-width:700px){header{padding:14px}.version{display:none}nav{padding:10px}.workspace{grid-template-columns:1fr}.pages{border-bottom:1px solid #d9dfd4}.pages .widgets{grid-template-columns:repeat(3,1fr)}.pages .layer{display:none}.editor{padding:12px}.settings{padding:16px}.newDevice{margin-left:0}.deviceSelect{width:100%}.previewHeading span{display:none}}
-  `;}
+  css(){return themeCSS+panelCSS;}
 }
 if(!customElements.get('paperboard-panel'))customElements.define('paperboard-panel',PaperBoardPanel);

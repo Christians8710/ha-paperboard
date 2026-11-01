@@ -1,6 +1,6 @@
 """Gemeinsame Kennungen und Gerätefähigkeiten."""
 DOMAIN = "paperboard"
-VERSION = RENDER_VERSION = "0.2.0"
+VERSION = RENDER_VERSION = "0.3.0"
 MODELS = {
     "e1001": {"name": "Seeed reTerminal E1001", "width": 800, "height": 480, "color": False, "touch": False},
     "e1002": {"name": "Seeed reTerminal E1002", "width": 800, "height": 480, "color": True, "touch": False},

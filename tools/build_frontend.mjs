@@ -5,7 +5,7 @@ import path from 'node:path';
 const root=path.resolve(import.meta.dirname,'..');
 const out=path.join(root,'custom_components/paperboard/frontend');
 await build({entryPoints:[path.join(root,'frontend-src/flash.js')],outfile:path.join(out,'flash.bundle.js'),bundle:true,format:'esm',target:'es2022',minify:true,legalComments:'eof'});
-await build({entryPoints:[path.join(root,'frontend-src/offline.js')],outfile:path.join(out,'offline.bundle.js'),bundle:true,format:'iife',target:'es2022',minify:true,legalComments:'eof'});
+await build({entryPoints:[path.join(root,'frontend-src/offline.js')],outfile:path.join(out,'offline.bundle.js'),bundle:true,format:'iife',target:'es2022',loader:{'.png':'dataurl'},minify:true,legalComments:'eof'});
 await mkdir(path.join(out,'licenses'),{recursive:true});
 const req=createRequire(await realpath(path.join(root,'node_modules/esptool-js/package.json')));
 for(const name of ['esptool-js','spark-md5','pako','atob-lite']){

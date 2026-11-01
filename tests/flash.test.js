@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {configurationBytes,validateWifi,validateAddress,sha256,writeE1002,CONFIG_OFFSET,CONFIG_SIZE} from '../custom_components/paperboard/frontend/flash-core.js';
 const config=()=>({schema:1,model:'e1002',ssid:'Testnetz',password:'Nur-Testpasswort',base_url:'http://homeassistant.local:8123/',entry_id:'test-entry',token:'t'.repeat(43),api_key_hex:'12'.repeat(32),ota_password:'p'.repeat(32),install_id:'ab'.repeat(16),pages:3,refresh_interval:900,rotated:false});
-async function input(){const firmware=new Uint8Array(120000).fill(233);const manifest={version:'0.2.0',model:'e1002',chip:'ESP32-S3',flash_size:'32MB',config_offset:CONFIG_OFFSET,config_size:CONFIG_SIZE,files:{factory:{bytes:firmware.length,sha256:await sha256(firmware)}}};return {firmware,manifest,config:config(),port:{},md5:()=> 'test-md5'};}
+async function input(){const firmware=new Uint8Array(120000).fill(233);const manifest={version:'0.3.0',model:'e1002',chip:'ESP32-S3',flash_size:'32MB',config_offset:CONFIG_OFFSET,config_size:CONFIG_SIZE,files:{factory:{bytes:firmware.length,sha256:await sha256(firmware)}}};return {firmware,manifest,config:config(),port:{},md5:()=> 'test-md5'};}
 function device(chip='ESP32-S3',size='32MB'){
  const calls=[];const transport={disconnect:async()=>calls.push('disconnect')};
  const loader={chip:{CHIP_NAME:chip},IS_STUB:true,main:async()=>calls.push('connect'),detectFlashSize:async()=>size,
