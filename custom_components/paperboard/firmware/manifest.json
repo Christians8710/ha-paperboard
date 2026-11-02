@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "model": "e1002",
   "chip": "ESP32-S3",
   "flash_size": "32MB",
@@ -10,13 +10,13 @@
       "kind": "factory",
       "file": "paperboard-e1002.factory.bin",
       "bytes": 1043216,
-      "sha256": "bf982acfb389dd6e82b85bfb6c532f75b1ef4fe63a40e9f2ecbf5e656f5947ee"
+      "sha256": "312eb83cf571b3034f07eea220ed1e7e5592e46ec4621c06015c8d20f1b60384"
     },
     {
       "kind": "ota",
       "file": "paperboard-e1002.ota.bin",
       "bytes": 977680,
-      "sha256": "7b185fb965dac3488dc664d85b9358de7ebdb6d15c1b1b2b2de2f3729423b77a"
+      "sha256": "88b853a15ebd0e324e8fd18a237dcbba57bfb63a1bc3685bf6741b6f2e63bcb6"
     }
   ]
 }

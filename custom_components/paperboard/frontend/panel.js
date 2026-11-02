@@ -42,6 +42,8 @@ class PaperBoardPanel extends HTMLElement {
   changed(){this.previewSerial=(this.previewSerial||0)+1;this.dirty=true;this.preview='';if(this.noticeKind==='success')this.notice='';this.render();this.schedulePreview();}
   fieldChanged(el){
     if(this.editingField!==el){this.checkpoint();this.editingField=el;}
+    const undo=this.shadowRoot.querySelector('[data-action=undo]'),redo=this.shadowRoot.querySelector('[data-action=redo]');
+    if(undo)undo.disabled=!this.undo.length;if(redo)redo.disabled=!this.redo.length;
     this.previewSerial=(this.previewSerial||0)+1;this.dirty=true;this.preview='';
     const save=this.shadowRoot.querySelector('#save');if(save){save.textContent='Änderungen speichern';save.classList.add('primary');}
     if(this.noticeKind==='success'){this.notice='';this.shadowRoot.querySelector('.notice')?.remove();}
