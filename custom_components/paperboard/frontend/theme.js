@@ -1,17 +1,34 @@
 // Gemeinsame Gestaltung für Editor und eigenständigen USB-Installer.
+// Home Assistant hat Vorrang; eigenständige Installer folgen dem Betriebssystem.
+export function syncAppearance(element,hass) {
+  const dark=hass?.themes?.darkMode;
+  if(typeof dark==='boolean')element.setAttribute('appearance',dark?'dark':'light');
+  else element.removeAttribute('appearance');
+}
+const lightCSS = `
+  --pb-background:#f1f6f7; --pb-card:#ffffff; --pb-border:#6b858e;
+  --pb-text:#16343d; --pb-muted:#46636c; --pb-primary:#f5c66a;
+  --pb-accent:#076967; --pb-secondary:#e2edef; --pb-input:#f8fbfb;
+  --pb-error-bg:#fff0ee; --pb-error-text:#8c2520; --pb-error-border:#b53a32;
+  --pb-warning-bg:#fff4d9; --pb-warning-text:#624600;
+  --pb-success-bg:#e7f3ee; --pb-logo-bg:#edf6f6;
+  color-scheme:light;
+`;
 export const themeCSS = `
 :host {
   --pb-background:#10252c; --pb-card:#18363e; --pb-border:#36525b;
-  --pb-text:#edf6f6; --pb-muted:#b6cdd0; --pb-primary:#f5c66a;
-  --pb-accent:#53ccca; --pb-secondary:#2e535b; --pb-input:#10252c;
+  --pb-text:#edf6f6; --pb-muted:#b6cdd0; --pb-primary:#f5c66a; --pb-primary-text:#10252c;
+  --pb-accent:#65d9d7; --pb-secondary:#2e535b; --pb-input:#10252c;
   --pb-error-bg:#472b33; --pb-error-text:#ffdad6; --pb-error-border:#e9a29b;
   --pb-warning-bg:#3c3525; --pb-warning-text:#f9dda3;
-  --pb-success-bg:#193f3e; --pb-paper:#fff;
+  --pb-success-bg:#193f3e; --pb-paper:#fff; --pb-logo-bg:#edf6f6;
   --pb-radius:18px; --pb-control-radius:10px; --pb-space:20px; --pb-padding:22px;
   color-scheme:dark; color:var(--pb-text); background:var(--pb-background);
   font:400 1rem/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   display:block; min-height:100%; overflow-wrap:anywhere;
 }
+:host([appearance=light]) {${lightCSS}}
+@media(prefers-color-scheme:light) {:host(:not([appearance])) {${lightCSS}}}
 *,*::before,*::after {box-sizing:border-box}
 [hidden] {display:none!important}
 h1,h2,h3,p {margin-top:0}
@@ -30,7 +47,7 @@ button,.button {
   white-space:normal;overflow-wrap:anywhere;
 }
 button:hover:not(:disabled),.button:hover {border-color:var(--pb-accent)}
-button.primary,.button.primary {background:var(--pb-primary);color:var(--pb-background);border-color:var(--pb-primary);font-weight:700}
+button.primary,.button.primary {background:var(--pb-primary);color:var(--pb-primary-text);border-color:var(--pb-primary);font-weight:700}
 button.primary:hover:not(:disabled),.button.primary:hover {border-color:var(--pb-text)}
 button:disabled {opacity:.5;cursor:default}
 input:not([type=checkbox]):not([type=range]),select,textarea {

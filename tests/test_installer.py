@@ -19,7 +19,7 @@ def firmware(directory):
     for kind in ('factory','ota'):
         raw=b'\xe9'*120000;name=f'paperboard-e1002.{kind}.bin';(directory/name).write_bytes(raw)
         entries.append({'kind':kind,'file':name,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()})
-    manifest={'version':'0.3.0','model':'e1002','chip':'ESP32-S3','flash_size':'32MB','config_offset':0x1ff0000,'config_size':65536,'firmware':entries}
+    manifest={'version':'0.3.1','model':'e1002','chip':'ESP32-S3','flash_size':'32MB','config_offset':0x1ff0000,'config_size':65536,'firmware':entries}
     (directory/'manifest.json').write_text(json.dumps(manifest));return manifest
 
 
@@ -63,5 +63,5 @@ def test_existing_020_device_remains_compatible_without_flashing():
 
 @pytest.mark.parametrize('patch',[{'battery':101},{'battery':True},{'temperature':float('nan')},{'humidity':-1},{'version':'<script>'},{'model':'e1004'},{'install_id':'wrong'}])
 def test_bad_telemetry(patch):
-    raw={'model':'e1002','version':'0.3.0','install_id':'a'*32,'boot_id':'123',**patch}
+    raw={'model':'e1002','version':'0.3.1','install_id':'a'*32,'boot_id':'123',**patch}
     with pytest.raises(ValueError):installer.validate_telemetry(raw,'a'*32)

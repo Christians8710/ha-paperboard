@@ -1,12 +1,12 @@
-import {themeCSS,footerHTML} from './theme.js?v=0.3.0';
-import {installerCSS} from './installer-style.js?v=0.3.0';
-import {validateWifi,validateAddress,verifyFirmware} from './flash-core.js?v=0.3.0';
+import {themeCSS,footerHTML,syncAppearance} from './theme.js?v=0.3.1';
+import {installerCSS} from './installer-style.js?v=0.3.1';
+import {validateWifi,validateAddress,verifyFirmware} from './flash-core.js?v=0.3.1';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const base64=bytes=>{let s='';for(let i=0;i<bytes.length;i+=16384)s+=String.fromCharCode(...bytes.subarray(i,i+16384));return btoa(s);};
 const from64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 export class PaperBoardInstaller extends HTMLElement {
   constructor(){super();this.attachShadow({mode:'open'});this.phase='prepare';this.message='Geprüfte Firmware wird geladen …';this.percent=0;this.running=false;this.closeable=true;this.formValues={};this.addEventListener('keydown',e=>this.dialogKey(e));}
-  connectedCallback(){this.render();this.prepare();}
+  connectedCallback(){syncAppearance(this,this.context?.hass);this.render();this.prepare();}
   disconnectedCallback(){clearTimeout(this.pollTimer);this.pollResolve?.();}
   async prepare(){
     try{
@@ -17,9 +17,9 @@ export class PaperBoardInstaller extends HTMLElement {
         if(!response.ok)throw new Error('Die Firmwaredatei konnte nicht geladen werden.');
         this.firmware=new Uint8Array(await response.arrayBuffer());
       }
-      this.flashFunction=(await import('./flash.bundle.js?v=0.3.0')).flash;
+      this.flashFunction=(await import('./flash.bundle.js?v=0.3.1')).flash;
       if(globalThis.crypto?.subtle)await verifyFirmware(this.firmware,this.meta.firmware);
-      this.phase='form';this.message='Firmware 0.3.0 geladen. Noch wurde kein USB-Gerät geöffnet.';this.render();
+      this.phase='form';this.message='Firmware 0.3.1 geladen. Noch wurde kein USB-Gerät geöffnet.';this.render();
     }catch(e){this.phase='error';this.message=e.message||'Die Installationsvorbereitung ist fehlgeschlagen.';this.render();}
   }
   render(){
@@ -126,7 +126,7 @@ export class PaperBoardInstaller extends HTMLElement {
     this.phase='done';this.message=this.connected?'USB, WLAN-Anmeldung und Bildabruf erfolgreich bestätigt.':'USB-Installation abgeschlossen; die Verbindung zu Home Assistant ist noch nicht bestätigt.';this.render();
   }
   backup(){
-    const copy={version:'0.3.0',model:'e1002',entry_id:this.meta.entry_id,token:this.meta.token,
+    const copy={version:'0.3.1',model:'e1002',entry_id:this.meta.entry_id,token:this.meta.token,
       api_key:this.meta.credentials.api_key,ota_password:this.meta.credentials.ota_password};
     this.download('PaperBoard-E1002-Geraetezugaenge.json',JSON.stringify(copy,null,2),'application/json');
   }

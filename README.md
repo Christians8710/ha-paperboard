@@ -10,14 +10,20 @@ Seiten und eine Vorschau des tatsächlich gerenderten Displaybilds. Den Anfang
 machen die Seeed reTerminal E1001 bis E1004; weitere Hersteller können später
 über eigene Geräteprofile ergänzt werden.
 
-## Version 0.3.0 – Einheitliche Oberfläche für Desktop und Smartphone
+## Version 0.3.1 – Helle Darstellung und einfachere Bedienung
 
 Die Integration und der E1002-Installer sind implementiert. Vor dem Einsatz am eigenen Gerät bitte
 die unten genannten Grenzen beachten. Es gibt noch keinen Hardwaretest mit
 PaperBoard. Die persönliche Vorgängerintegration `eink_calendar` wird nicht
 überschrieben oder automatisch umgestellt.
 
-### Neu in 0.3.0
+### Neu in 0.3.1
+
+- Helle und dunkle Darstellung folgen Home Assistant; der eigenständige Installer folgt dem Betriebssystem.
+- Größere Grifffläche zur Größenänderung von Bausteinen (bis 44 × 44 Pixel, begrenzt auf den Baustein).
+- Eindeutige Aktionen „Rückgängig“ und „Wiederholen“.
+
+### Seit 0.3.0
 
 - Ruhiges Petrol-Design mit türkisen Auswahlmarkierungen und goldenen Hauptaktionen.
 - Einheitliche Karten, Formulare und Statusmeldungen in Editor, Datenquellen,

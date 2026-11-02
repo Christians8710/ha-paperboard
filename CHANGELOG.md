@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.3.1 – 02.11.2026
+
+- Helle und dunkle Oberfläche folgen der aktiven Home-Assistant-Einstellung, auch bei laufendem Wechsel. Eigenständige Installer folgen der Betriebssystemeinstellung.
+- Logo und E-Paper-Vorschau behalten ihre ursprünglichen Farben.
+- Berührungsfläche des Größengriffs auf bis zu 44 × 44 Pixel erweitert; bei kleinen Bausteinen auf deren Fläche begrenzt. Zahlenfelder bleiben als präzise Alternative.
+- „Zurück / Vor“ durch „Rückgängig / Wiederholen“ ersetzt.
+- Versionsgleiche E1002-Firmware für Neuinstallationen; bestehende Geräte benötigen kein Flashen.
+
 ## 0.3.0 – 02.11.2026
 
 - Gemeinsames Petrol-Design mit zentralen Gestaltungswerten, türkisfarbenen

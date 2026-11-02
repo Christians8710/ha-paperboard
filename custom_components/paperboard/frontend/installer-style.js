@@ -6,7 +6,7 @@ header h1 {font-size:1.5rem;line-height:1.4;margin:0}
 header button {flex:0 0 44px;padding:0;font-size:1.4rem;background:transparent}
 .eyebrow {font-size:.8rem;font-weight:700;letter-spacing:.08em;color:var(--pb-accent);margin-bottom:8px}
 .installerBrand {display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:22px}
-.logoFrame {background:var(--pb-text);padding:6px 10px;border-radius:10px}
+.logoFrame {background:var(--pb-logo-bg);padding:6px 10px;border-radius:10px}
 .logoFrame img {display:block;width:136px;max-width:100%;height:auto}
 .installerBrand .eyebrow {margin:0}
 label {margin:18px 0}

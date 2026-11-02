@@ -1,7 +1,7 @@
-import {newWidget, clampWidget, scaleLayout, clone, uid} from './editor.js?v=0.3.0';
-import './installer-ui.js?v=0.3.0';
-import {themeCSS,footerHTML} from './theme.js?v=0.3.0';
-import {panelCSS} from './panel-style.js?v=0.3.0';
+import {newWidget, clampWidget, scaleLayout, clone, uid} from './editor.js?v=0.3.1';
+import './installer-ui.js?v=0.3.1';
+import {themeCSS,footerHTML,syncAppearance} from './theme.js?v=0.3.1';
+import {panelCSS} from './panel-style.js?v=0.3.1';
 
 const TYPES = {text:'Text', datetime:'Datum und Uhrzeit', sensor:'Sensorwert', weather:'Wetter', calendar:'Kalender', waste:'Abfalltermine', holiday:'Feiertage', status:'Gerätestatus', rectangle:'Rahmen', line:'Linie'};
 const COLORS = {black:'Schwarz',white:'Weiß',red:'Rot',yellow:'Gelb',blue:'Blau',green:'Grün'};
@@ -14,7 +14,7 @@ class PaperBoardPanel extends HTMLElement {
     this.selected=null; this.tab='editor'; this.dirty=false; this.undo=[]; this.redo=[];
     this.loading=true;this.loadError='';this.snap=true; this.autoPreview=true; this.preview=''; this.notice=''; this.busy=false;
   }
-  set hass(value) { this._hass=value; if (!this.started && this.isConnected) {this.started=true; this.loadList();} }
+  set hass(value) { this._hass=value; syncAppearance(this,value); const installer=this.shadowRoot.querySelector('paperboard-installer');if(installer)syncAppearance(installer,value); if (!this.started && this.isConnected) {this.started=true; this.loadList();} }
   get hass() {return this._hass;}
   connectedCallback() {this.render(); if(this.hass && !this.started){this.started=true;this.loadList();}}
   disconnectedCallback(){clearTimeout(this.previewTimer); this.previewSerial=(this.previewSerial||0)+1;}
@@ -85,7 +85,7 @@ class PaperBoardPanel extends HTMLElement {
     const w=this.currentWidget;
     root.innerHTML=`<style>${this.css()}</style><div class="shell">
       <header class="appHeader"><div class="brand"><div class="logoFrame"><img src="/paperboard_static/paperboard-logo.png" alt="PaperBoard" width="174" height="62"></div><div><strong>Deine Inhalte. Dein Display.</strong><small>E-Paper-Dashboards für Home Assistant</small></div></div>
-        <div class="headerActions"><span class="version">Version ${esc(this.version||'0.3.0')}</span>
+        <div class="headerActions"><span class="version">Version ${esc(this.version||'0.3.1')}</span>
         ${this.doc?`<button id="save" class="${this.dirty?'primary':''}" ${this.busy?'disabled':''}>${this.busy?'Speichert …':this.dirty?'Änderungen speichern':'✓ Gespeichert'}</button>`:''}</div></header>
       ${this.notice?`<div role="${this.noticeKind==='error'?'alert':'status'}" class="notice ${esc(this.noticeKind)}"><span>${this.noticeKind==='error'?'Hinweis: ':''}${esc(this.notice)}</span><button id="dismiss" aria-label="Meldung schließen">×</button></div>`:''}
       ${this.loading?'<main class="loadState" role="status"><h1>PaperBoard wird geladen</h1><p><span class="loadingDot" aria-hidden="true"></span>Displays und Seiten werden abgerufen …</p></main>':this.loadError?`<main class="loadState error" role="alert"><h1>Verbindung fehlgeschlagen</h1><p>${esc(this.loadError)}</p><button id="retryLoad" class="primary">Erneut laden</button></main>`:!this.displays.length?`<main class="empty"><h1>Dein erstes PaperBoard</h1><p>Verbinde ein Display und gestalte deine eigenen Seiten.</p><a class="button primary" href="/config/integrations/dashboard/add?domain=paperboard">Display einrichten</a></main>`:`
@@ -111,7 +111,7 @@ class PaperBoardPanel extends HTMLElement {
       </aside><main class="editor"><div class="toolbar"><label>Seitenname<input id="pageName" value="${esc(this.currentPage.name)}"></label>
         <button data-action="pageUp" title="Seite nach vorne" aria-label="Seite nach vorne">←</button><button data-action="pageDown" title="Seite nach hinten" aria-label="Seite nach hinten">→</button>
         <button data-action="copyPage">Seite kopieren</button><button data-action="deletePage" ${this.doc.pages.length<2?'disabled':''}>Seite löschen</button></div>
-      <div class="tools"><button data-action="undo" ${!this.undo.length?'disabled':''}>↶ Zurück</button><button data-action="redo" ${!this.redo.length?'disabled':''}>↷ Vor</button>
+      <div class="tools"><button data-action="undo" ${!this.undo.length?'disabled':''}>↶ Rückgängig</button><button data-action="redo" ${!this.redo.length?'disabled':''}>↷ Wiederholen</button>
         <label><input id="snap" type="checkbox" ${this.snap?'checked':''}> Raster 8 px</label><label><input id="autoPreview" type="checkbox" ${this.autoPreview?'checked':''}> Automatische Vorschau</label>
         <button id="preview">Vorschau aktualisieren</button></div>
       <div class="stageWrap"><div id="stage" aria-label="Bearbeitbare Displayseite" class="stage ${this.snap?'grid':''}" style="aspect-ratio:${this.doc.width}/${this.doc.height}">

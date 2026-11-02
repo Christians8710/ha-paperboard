@@ -97,7 +97,7 @@ async def test_read_only_user_cannot_read_display_keys(hass, display, hass_ws_cl
 
 
 async def test_installer_credentials_persist_and_stay_admin_only(hass, display, hass_ws_client):
-    hass.data['paperboard']['firmware']={'available':True,'version':'0.3.0','files':{}}
+    hass.data['paperboard']['firmware']={'available':True,'version':'0.3.1','files':{}}
     client=await hass_ws_client(hass)
     for msgid in (1,2):
         await client.send_json({'id':msgid,'type':'paperboard/command','action':'installer_prepare','entry_id':display.entry_id})
@@ -116,7 +116,7 @@ async def test_device_sync_auth_fragmented_payload_and_status_rendering(hass, di
     d=hass.data['paperboard']['displays'][display.entry_id];d.installation=installation_credentials()
     client=await hass_client(hass)
     url=f'/api/paperboard/device/{display.entry_id}/sync'
-    body={'model':'e1002','version':'0.3.0','install_id':d.installation['install_id'],'boot_id':'123','downloaded':True,'battery':82,'temperature':21.5,'humidity':48}
+    body={'model':'e1002','version':'0.3.1','install_id':d.installation['install_id'],'boot_id':'123','downloaded':True,'battery':82,'temperature':21.5,'humidity':48}
     assert (await client.post(url,json=body)).status==401
     headers={'X-PaperBoard-Token':display.data['token'],'Content-Type':'application/json'}
     async def chunks():

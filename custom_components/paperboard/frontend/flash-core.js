@@ -25,7 +25,7 @@ export async function configurationBytes(config){
 }
 export async function verifyFirmware(bytes,manifest){
   const file=manifest.files?.factory;
-  if(manifest.version!=='0.3.0'||manifest.model!=='e1002'||manifest.chip!=='ESP32-S3'||manifest.flash_size!=='32MB'||manifest.config_offset!==CONFIG_OFFSET||manifest.config_size!==CONFIG_SIZE||!file||bytes.length!==file.bytes||bytes.length<100000||bytes.length>=0x400000||await sha256(bytes)!==file.sha256)throw new Error('Die Firmware ist unvollständig oder ihre Prüfsumme stimmt nicht. Es wurde nichts geschrieben.');
+  if(manifest.version!=='0.3.1'||manifest.model!=='e1002'||manifest.chip!=='ESP32-S3'||manifest.flash_size!=='32MB'||manifest.config_offset!==CONFIG_OFFSET||manifest.config_size!==CONFIG_SIZE||!file||bytes.length!==file.bytes||bytes.length<100000||bytes.length>=0x400000||await sha256(bytes)!==file.sha256)throw new Error('Die Firmware ist unvollständig oder ihre Prüfsumme stimmt nicht. Es wurde nichts geschrieben.');
 }
 export async function writeE1002({port,firmware,manifest,config,createLoader,md5,onProgress=()=>{}}){
   await verifyFirmware(firmware,manifest);

@@ -2,7 +2,7 @@ export const panelCSS = `
 .shell {max-width:1048px;margin:auto;padding:28px 24px 24px;min-width:0}
 .appHeader {display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:24px}
 .brand {display:flex;align-items:center;gap:18px;min-width:0}
-.logoFrame {display:flex;align-items:center;background:var(--pb-text);border-radius:12px;padding:8px 12px;flex-shrink:0}
+.logoFrame {display:flex;align-items:center;background:var(--pb-logo-bg);border-radius:12px;padding:8px 12px;flex-shrink:0}
 .logoFrame img {display:block;width:174px;height:auto;max-width:100%}
 .brand strong {display:block;color:var(--pb-text);font-size:1.15rem;line-height:1.4}
 .brand small {display:block;max-width:260px;margin-top:4px}
@@ -45,7 +45,8 @@ nav button.active {background:var(--pb-secondary);border-color:var(--pb-accent);
 .widget.rectangle {border:2px solid var(--widget-color)}
 .widget:hover {outline:1px dashed var(--pb-secondary)}
 .widget.selected {outline:2px solid var(--pb-accent);z-index:50}
-.resize {position:absolute;bottom:0;right:0;width:14px;height:14px;background:var(--pb-accent);border:2px solid var(--pb-background);cursor:nwse-resize}
+.resize {position:absolute;bottom:0;right:0;width:44px;height:44px;max-width:100%;max-height:100%;cursor:nwse-resize}
+.resize::after {content:"";position:absolute;bottom:0;right:0;width:14px;height:14px;background:var(--pb-accent);border:2px solid var(--pb-background);pointer-events:none}
 .canvasMeta {font-size:.75rem;color:var(--pb-muted);margin:12px 0 20px}
 .preview {border-top:1px solid var(--pb-border);padding-top:20px}
 .previewHeading {display:flex;gap:8px;justify-content:space-between;align-items:baseline;flex-wrap:wrap;margin-bottom:12px}

@@ -32,8 +32,8 @@ async def index(request):
 <paperboard-panel></paperboard-panel><script type="module">
 import '/paperboard_static/panel.js';
 const panel=document.querySelector('paperboard-panel');
-panel.hass={paperboardPreviewOnly:true,states:STATES,callWS:async message=>{const r=await fetch('/command'+location.search,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(message)});const d=await r.json();if(!r.ok)throw new Error(d.error);return d;}};
-</script></html>'''.replace('states:STATES','states:'+json.dumps(states))
+panel.hass={paperboardPreviewOnly:true,themes:{darkMode:APPEARANCE},states:STATES,callWS:async message=>{const r=await fetch('/command'+location.search,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(message)});const d=await r.json();if(!r.ok)throw new Error(d.error);return d;}};
+</script></html>'''.replace('states:STATES','states:'+json.dumps(states)).replace('APPEARANCE', {'light':'false','dark':'true'}.get(request.query.get('appearance'),'undefined'))
     if request.query.get('mode')=='large_text':html=html.replace('body{','html{font-size:200%}body{',1)
     return web.Response(text=html,content_type='text/html')
 

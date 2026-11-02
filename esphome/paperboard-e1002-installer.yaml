@@ -6,7 +6,7 @@ esphome:
   min_version: 2026.10.1
   project:
     name: Christians8710.PaperBoard
-    version: "0.3.0"
+    version: "0.3.1"
   on_boot:
     priority: 600
     then:

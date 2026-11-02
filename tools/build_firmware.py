@@ -42,7 +42,7 @@ def main():
         (out/name).write_bytes(content)
         entries.append({'kind':kind,'file':name,'bytes':len(content),'sha256':hashlib.sha256(content).hexdigest()})
     version=json.loads((ROOT/'custom_components'/'paperboard'/'manifest.json').read_text())['version']
-    if version!='0.3.0':raise ValueError('Firmwareversion muss zur Integration passen.')
+    if version!='0.3.1':raise ValueError('Firmwareversion muss zur Integration passen.')
     manifest={'version':version,'model':'e1002','chip':'ESP32-S3','flash_size':'32MB',
               'config_offset':0x1ff0000,'config_size':65536,'firmware':entries}
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
